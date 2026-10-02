@@ -1,0 +1,182 @@
+.topbar {
+  height: 72px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+
+  padding: 0 36px;
+
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid var(--color-border);
+
+  backdrop-filter: blur(10px);
+}
+
+.topbar-search {
+  width: min(420px, 42vw);
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 0 13px;
+
+  background: var(--color-background);
+  border: 1px solid transparent;
+  border-radius: 10px;
+
+  color: var(--color-text-tertiary);
+
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.topbar-search:focus-within {
+  background: var(--color-surface);
+  border-color: var(--color-primary);
+
+  box-shadow: 0 0 0 3px rgba(91, 95, 245, 0.1);
+}
+
+.topbar-search input {
+  width: 100%;
+
+  background: transparent;
+  border: none;
+  outline: none;
+
+  color: var(--color-text-primary);
+
+  font-size: 13px;
+}
+
+.topbar-search input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.topbar-icon-button {
+  position: relative;
+
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+
+  color: var(--color-text-secondary);
+}
+
+.topbar-icon-button:hover {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+.topbar-notification-dot {
+  position: absolute;
+
+  top: 8px;
+  right: 8px;
+
+  width: 6px;
+  height: 6px;
+
+  background: var(--color-danger);
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+}
+
+.topbar-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 5px 7px;
+
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+
+  color: var(--color-text-secondary);
+}
+
+.topbar-profile:hover {
+  background: var(--color-background);
+}
+
+.topbar-avatar {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    #7759e7
+  );
+
+  border-radius: 50%;
+
+  color: #ffffff;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.topbar-user {
+  min-width: 90px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.topbar-user strong {
+  color: var(--color-text-primary);
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.topbar-user span {
+  margin-top: 2px;
+
+  color: var(--color-text-tertiary);
+
+  font-size: 10px;
+}
+
+@media (max-width: 700px) {
+  .topbar {
+    padding: 0 16px;
+  }
+
+  .topbar-search {
+    width: 100%;
+  }
+
+  .topbar-user,
+  .topbar-profile > svg {
+    display: none;
+  }
+}
