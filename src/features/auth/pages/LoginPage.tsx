@@ -1,5 +1,7 @@
 import { useState, type SubmitEvent } from 'react'
 import { Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 import { Button } from '../../../components/ui/Button/Button'
 import { Input } from '../../../components/ui/Input/Input'
@@ -8,6 +10,8 @@ import { AuthLayout } from '../components/AuthLayout'
 import './LoginPage.css'
 
 export function LoginPage() {
+  const navigate = useNavigate()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -37,10 +41,9 @@ export function LoginPage() {
       return;
     }
 
-    console.log({
-      email,
-      password,
-    });
+    login(email)
+    navigate('/app/dashboard')
+
   };
 
   return (
