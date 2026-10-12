@@ -1,0 +1,38 @@
+
+import { createContext } from 'react'
+
+import type { Api } from '../types/api.types'
+import type { CreateApiData } from '../components/CreateApiModal/CreateApiModal'
+
+import type {
+  ApiVersion,
+  CreateApiVersionData,
+} from '../../versions/types/version.types'
+
+import type {
+  OpenApiDocument,
+  CreateOpenApiDocumentData,
+} from '../../openapi/types/openapi.types'
+
+export interface ApiContextValue {
+    apis: Api[]
+    createApi: (data: CreateApiData) => boolean
+    getApiById: (id: string) => Api | undefined
+    
+    versions: ApiVersion[]
+    getVersionsByApiId: (apiId: string) => ApiVersion[]
+    createVersion: (data: CreateApiVersionData) => boolean
+    documents: OpenApiDocument[]
+
+    getDocumentsByVersionId: (
+        versionId: string,
+    ) => OpenApiDocument[]
+
+    createDocument: (
+        data: CreateOpenApiDocumentData,
+    ) => boolean
+}
+
+export const ApiContext = createContext<ApiContextValue | undefined>(
+  undefined
+)

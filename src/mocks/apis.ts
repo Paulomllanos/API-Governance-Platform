@@ -1,0 +1,55 @@
+
+import type { Api } from '../features/apis/types/api.types'
+
+export const mockApis: Api[] = [
+  {
+    id: 'api-001',
+    name: 'Customer Management API',
+    description: 'Gestión y consulta de información de clientes.',
+    owner: 'Equipo de Clientes',
+    status: 'ACTIVE',
+    latestVersion: 'v1.2.0',
+    versionCount: 3,
+    updatedAt: '2026-10-08',
+  },
+  {
+    id: 'api-002',
+    name: 'Orders API',
+    description: 'Administración de órdenes y pedidos.',
+    owner: 'Equipo Comercial',
+    status: 'ACTIVE',
+    latestVersion: 'v2.0.0',
+    versionCount: 4,
+    updatedAt: '2026-10-07',
+  },
+  {
+    id: 'api-003',
+    name: 'Payments API',
+    description: 'Operaciones y consultas de pagos.',
+    owner: 'Equipo Financiero',
+    status: 'DRAFT',
+    latestVersion: 'v1.0.0',
+    versionCount: 1,
+    updatedAt: '2026-10-05',
+  },
+  {
+    id: 'api-004',
+    name: 'Inventory API',
+    description: 'Consulta y actualización de inventario.',
+    owner: 'Equipo de Operaciones',
+    status: 'ACTIVE',
+    latestVersion: 'v1.5.0',
+    versionCount: 2,
+    updatedAt: '2026-10-02',
+  },
+  {
+    id: 'api-005',
+    name: 'Legacy Billing API',
+    description: 'Servicios heredados de facturación.',
+    owner: 'Equipo de Finanzas',
+    status: 'DEPRECATED',
+    latestVersion: 'v1.0.0',
+    versionCount: 1,
+    updatedAt: '2026-09-25',
+  },
+]

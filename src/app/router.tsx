@@ -1,9 +1,13 @@
+
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { ProtectedRoute } from "../features/auth/components/ProtectedRoute";
 import { LoginPage } from "../features/auth/pages/LoginPage";
 import { AppLayout } from "../components/layout/AppLayout/AppLayout";
 import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
+import { ApisPage } from "../features/apis/pages/ApisPage";
+import { ApiProvider } from '../features/apis/context/ApiProvider'
+import { ApiDetailPage } from '../features/apis/pages/ApiDetailPage'
 
 export const router = createBrowserRouter([
   {
@@ -18,7 +22,9 @@ export const router = createBrowserRouter([
     path: "/app",
     element: (
       <ProtectedRoute>
-        <AppLayout />
+        <ApiProvider>
+          <AppLayout />
+        </ApiProvider>
       </ProtectedRoute>
     ),
     children: [
@@ -30,10 +36,14 @@ export const router = createBrowserRouter([
         path: "dashboard",
         element: <DashboardPage />,
       },
+      {
+        path: "apis",
+        element: <ApisPage />,
+      },
+      {
+        path: "apis/:apiId",
+        element: <ApiDetailPage />,
+      },
     ],
-  },
-  {
-    path: "*",
-    element: <Navigate to="/login" replace />,
   },
 ]);

@@ -1,0 +1,172 @@
+
+.create-version-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+  background: rgba(15, 35, 68, 0.45);
+}
+
+.create-version-modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(15, 35, 68, 0.16);
+}
+
+.create-version-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding: 26px 28px 22px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.create-version-modal__header h2 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.create-version-modal__header p {
+  margin-top: 7px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.create-version-modal__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.create-version-modal__close:hover {
+  background: var(--color-surface-secondary);
+}
+
+.create-version-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+
+  padding: 26px 28px;
+}
+
+.create-version-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.create-version-modal__field label {
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.create-version-modal__field textarea {
+  width: 100%;
+  min-height: 105px;
+  padding: 13px 14px;
+  resize: vertical;
+
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-text-primary);
+
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  outline: none;
+}
+
+.create-version-modal__field textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(91, 95, 245, 0.12);
+}
+
+.create-version-modal__field textarea::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.create-version-modal__notice {
+  padding: 14px;
+  border-radius: 9px;
+
+  background: var(--color-primary-soft);
+  color: var(--color-text-secondary);
+
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.create-version-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+
+  padding: 20px 28px;
+  border-top: 1px solid var(--color-border);
+}
+
+.create-version-modal__cancel {
+  min-height: 42px;
+  padding: 0 18px;
+
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 9px;
+
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.create-version-modal__cancel:hover {
+  background: var(--color-surface-secondary);
+}
+
+.create-version-modal__close:focus-visible,
+.create-version-modal__cancel:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+  .create-version-overlay {
+    padding: 12px;
+  }
+
+  .create-version-modal__header,
+  .create-version-modal__body,
+  .create-version-modal__footer {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
