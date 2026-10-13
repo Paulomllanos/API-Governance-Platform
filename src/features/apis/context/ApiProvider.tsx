@@ -1,7 +1,7 @@
-import { useState, type ReactNode } from "react";
+import { ApiContext } from './ApiContext'
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 
-import { mockApis } from "../../../mocks/apis";
-import { ApiContext } from "./ApiContext";
+import { fetchApis, createApiRequest } from "../services/apis.api";
 
 import type { Api } from "../types/api.types";
 import type { CreateApiData } from "../components/CreateApiModal/CreateApiModal";
@@ -29,7 +29,9 @@ interface ApiProviderProps {
 }
 
 export function ApiProvider({ children }: ApiProviderProps) {
-  const [apis, setApis] = useState<Api[]>(() => [...mockApis]);
+  const [apis, setApis] = useState<Api[]>([]);
+  const [isLoadingApis, setIsLoadingApis] = useState(true);
+  const [apisError, setApisError] = useState<string | null>(null);
   const [versions, setVersions] = useState<ApiVersion[]>(() => [
     ...mockVersions,
   ]);
@@ -38,27 +40,42 @@ export function ApiProvider({ children }: ApiProviderProps) {
   const [evaluations, setEvaluations] = useState<GovernanceExecution[]>([]);
   const [ruleResults] = useState<RuleResult[]>([]);
 
-  function createApi(data: CreateApiData): boolean {
+  const refreshApis = useCallback(async (): Promise<void> => {
+    setIsLoadingApis(true);
+    setApisError(null);
+
+    try {
+      const backendApis = await fetchApis();
+      setApis(backendApis);
+    } catch {
+      setApisError("No fue posible cargar las APIs desde el servidor.");
+    } finally {
+      setIsLoadingApis(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshApis();
+  }, [refreshApis]);
+
+  async function createApi(data: CreateApiData): Promise<boolean> {
+    const name = data.name.trim();
+
     const exists = apis.some(
-      (api) => api.name.trim().toLowerCase() === data.name.trim().toLowerCase(),
+      (api) => api.name.trim().toLowerCase() === name.toLowerCase(),
     );
 
     if (exists) {
       return false;
     }
 
-    const newApi: Api = {
-      id: crypto.randomUUID(),
-      name: data.name.trim(),
+    const createdApi = await createApiRequest({
+      name,
       description: data.description.trim(),
       owner: data.owner.trim(),
-      status: "DRAFT",
-      latestVersion: "—",
-      versionCount: 0,
-      updatedAt: new Date().toISOString().slice(0, 10),
-    };
+    });
 
-    setApis((current) => [newApi, ...current]);
+    setApis((current) => [createdApi, ...current]);
 
     return true;
   }
@@ -205,6 +222,9 @@ export function ApiProvider({ children }: ApiProviderProps) {
     <ApiContext.Provider
       value={{
         apis,
+        isLoadingApis,
+        apisError,
+        refreshApis,
         createApi,
         getApiById,
 

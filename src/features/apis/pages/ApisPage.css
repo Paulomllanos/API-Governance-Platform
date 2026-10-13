@@ -299,3 +299,45 @@
   outline: 3px solid var(--color-primary);
   outline-offset: 2px;
 }
+
+.apis-page__notice {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+
+  margin-bottom: 18px;
+  padding: 14px 18px;
+
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+
+  font-size: 12px;
+}
+
+.apis-page__notice--error {
+  border-color: var(--color-danger);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.apis-page__notice button {
+  padding: 8px 12px;
+
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.apis-page__notice button:hover {
+  border-color: var(--color-primary);
+}

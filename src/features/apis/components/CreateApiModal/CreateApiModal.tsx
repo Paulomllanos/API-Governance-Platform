@@ -1,74 +1,85 @@
+import { useState, type FormEvent } from "react";
+import { X } from "lucide-react";
 
-import { useState, type FormEvent } from 'react'
-import { X } from 'lucide-react'
+import { Input } from "../../../../components/ui/Input/Input";
+import { Button } from "../../../../components/ui/Button/Button";
 
-import { Input } from '../../../../components/ui/Input/Input'
-import { Button } from '../../../../components/ui/Button/Button'
-
-import './CreateApiModal.css'
+import "./CreateApiModal.css";
 
 export interface CreateApiData {
-  name: string
-  description: string
-  owner: string
+  name: string;
+  description: string;
+  owner: string;
 }
 
 interface CreateApiModalProps {
-  onClose: () => void
-  onCreate: (data: CreateApiData) => boolean
+  onClose: () => void;
+  onCreate: (data: CreateApiData) => Promise<boolean>;
 }
 
-export function CreateApiModal({
-  onClose,
-  onCreate,
-}: CreateApiModalProps) {
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [owner, setOwner] = useState('')
+export function CreateApiModal({ onClose, onCreate }: CreateApiModalProps) {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [owner, setOwner] = useState("");
   const [errors, setErrors] = useState<
     Partial<Record<keyof CreateApiData, string>>
-  >({})
+  >({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-    const data = {
+    if (isSubmitting) return;
+
+    const data: CreateApiData = {
       name: name.trim(),
       description: description.trim(),
       owner: owner.trim(),
-    }
+    };
 
-    const nextErrors: typeof errors = {}
+    const nextErrors: typeof errors = {};
 
     if (!data.name) {
-      nextErrors.name = 'El nombre es obligatorio.'
+      nextErrors.name = "El nombre es obligatorio.";
     } else if (data.name.length < 3) {
-      nextErrors.name = 'Ingresa al menos 3 caracteres.'
+      nextErrors.name = "Ingresa al menos 3 caracteres.";
     }
 
     if (!data.description) {
-      nextErrors.description = 'La descripción es obligatoria.'
+      nextErrors.description = "La descripción es obligatoria.";
     }
 
     if (!data.owner) {
-      nextErrors.owner = 'El responsable es obligatorio.'
+      nextErrors.owner = "El responsable es obligatorio.";
     }
 
     if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors)
-      return
+      setErrors(nextErrors);
+      return;
     }
 
-    const created = onCreate(data)
+    setSubmitError("");
+    setIsSubmitting(true);
 
-    if (!created) {
-      setErrors({
-        name: 'Ya existe una API registrada con este nombre.',
-      })
-      return
+    try {
+      const created = await onCreate(data);
+
+      if (!created) {
+        setErrors({
+          name: "Ya existe una API registrada con este nombre.",
+        });
+        return;
+      }
+
+      onClose();
+    } catch {
+      setSubmitError(
+        "No fue posible registrar la API. Verifica que el backend esté disponible e inténtalo nuevamente.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    onClose()
   }
 
   return (
@@ -82,9 +93,7 @@ export function CreateApiModal({
         <header className="create-api-modal__header">
           <div>
             <h2 id="create-api-title">Nueva API</h2>
-            <p>
-              Registra un nuevo activo en el catálogo de gobierno.
-            </p>
+            <p>Registra un nuevo activo en el catálogo de gobierno.</p>
           </div>
 
           <button
@@ -92,6 +101,7 @@ export function CreateApiModal({
             className="create-api-modal__close"
             onClick={onClose}
             aria-label="Cerrar formulario"
+            disabled={isSubmitting}
           >
             <X size={20} />
           </button>
@@ -107,20 +117,18 @@ export function CreateApiModal({
               maxLength={100}
               autoFocus
               onChange={(event) => {
-                setName(event.target.value)
+                setName(event.target.value);
                 setErrors((current) => ({
                   ...current,
                   name: undefined,
-                }))
+                }));
               }}
               error={errors.name}
               required
             />
 
             <div className="create-api-modal__field">
-              <label htmlFor="api-description">
-                Descripción
-              </label>
+              <label htmlFor="api-description">Descripción</label>
 
               <textarea
                 id="api-description"
@@ -128,11 +136,11 @@ export function CreateApiModal({
                 maxLength={500}
                 placeholder="Describe el propósito de esta API..."
                 onChange={(event) => {
-                  setDescription(event.target.value)
+                  setDescription(event.target.value);
                   setErrors((current) => ({
                     ...current,
                     description: undefined,
-                  }))
+                  }));
                 }}
                 aria-invalid={Boolean(errors.description)}
                 required
@@ -152,11 +160,11 @@ export function CreateApiModal({
               value={owner}
               maxLength={100}
               onChange={(event) => {
-                setOwner(event.target.value)
+                setOwner(event.target.value);
                 setErrors((current) => ({
                   ...current,
                   owner: undefined,
-                }))
+                }));
               }}
               error={errors.owner}
               helperText="Nombre del equipo responsable de la API."
@@ -164,27 +172,33 @@ export function CreateApiModal({
             />
 
             <div className="create-api-modal__information">
-              La API se registrará en estado Borrador.
-              Podrás agregar versiones y especificaciones
-              OpenAPI posteriormente.
+              La API se registrará en estado Borrador. Podrás agregar versiones
+              y especificaciones OpenAPI posteriormente.
             </div>
           </div>
+
+          {submitError && (
+            <p role="alert" className="create-api-modal__submit-error">
+              {submitError}
+            </p>
+          )}
 
           <footer className="create-api-modal__footer">
             <button
               type="button"
               className="create-api-modal__cancel"
               onClick={onClose}
+              disabled={isSubmitting}
             >
               Cancelar
             </button>
 
-            <Button type="submit">
-              Registrar API
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Registrando API..." : "Registrar API"}
             </Button>
           </footer>
         </form>
       </div>
     </div>
-  )
+  );
 }

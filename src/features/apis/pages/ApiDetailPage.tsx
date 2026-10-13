@@ -38,6 +38,9 @@ export function ApiDetailPage() {
     createDocument,
     documents,
     requestEvaluation,
+    isLoadingApis,
+    apisError,
+    refreshApis,
   } = useApis();
 
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
@@ -70,6 +73,35 @@ export function ApiDetailPage() {
     },
     {},
   );
+
+  if (isLoadingApis) {
+    return (
+      <div className="api-detail-page">
+        <Card className="api-detail__not-found">
+          <h2>Cargando información de la API...</h2>
+          <p>Consultando el catálogo desde PostgreSQL.</p>
+        </Card>
+      </div>
+    );
+  }
+
+  if (apisError) {
+    return (
+      <div className="api-detail-page">
+        <Link to="/app/apis" className="api-detail__back">
+          <ArrowLeft size={16} />
+          Volver al catálogo
+        </Link>
+
+        <Card className="api-detail__not-found">
+          <h2>No fue posible cargar la API</h2>
+          <p>{apisError}</p>
+
+          <Button onClick={() => void refreshApis()}>Reintentar</Button>
+        </Card>
+      </div>
+    );
+  }
 
   if (!api) {
     return (

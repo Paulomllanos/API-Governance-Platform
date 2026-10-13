@@ -22,7 +22,10 @@ import type {
 
 export interface ApiContextValue {
   apis: Api[]
-  createApi: (data: CreateApiData) => boolean
+  isLoadingApis: boolean
+  apisError: string | null
+  refreshApis: () => Promise<void>
+  createApi: (data: CreateApiData) => Promise<boolean>
   getApiById: (id: string) => Api | undefined
 
   versions: ApiVersion[]
@@ -46,6 +49,10 @@ export interface ApiContextValue {
   requestEvaluation: (
     data: CreateEvaluationData,
   ) => boolean
+
+  
+  
+
 }
 
 export const ApiContext = createContext<ApiContextValue | undefined>(

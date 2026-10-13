@@ -1,47 +1,39 @@
+import { useMemo, useState } from "react";
+import { Layers3, Plus, Search, ArrowRight } from "lucide-react";
 
-import { useMemo, useState } from 'react'
-import {
-  Layers3,
-  Plus,
-  Search,
-  ArrowRight,
-} from 'lucide-react'
+import { Link } from "react-router-dom";
 
-import { Link } from 'react-router-dom'
+import { useApis } from "../hooks/useApis";
 
-import { useApis } from '../hooks/useApis'
+import { Button } from "../../../components/ui/Button/Button";
+import { Card } from "../../../components/ui/Card/Card";
 
-import { Button } from '../../../components/ui/Button/Button'
-import { Card } from '../../../components/ui/Card/Card'
+import { CreateApiModal } from "../components/CreateApiModal/CreateApiModal";
+import type { CreateApiData } from "../components/CreateApiModal/CreateApiModal";
 
+import type { ApiLifecycleStatus } from "../types/api.types";
 
-import { CreateApiModal } from '../components/CreateApiModal/CreateApiModal'
-import type { CreateApiData } from '../components/CreateApiModal/CreateApiModal'
+import "./ApisPage.css";
 
-
-import type { ApiLifecycleStatus } from '../types/api.types'
-
-import './ApisPage.css'
-
-type StatusFilter = ApiLifecycleStatus | 'ALL'
+type StatusFilter = ApiLifecycleStatus | "ALL";
 
 const statusLabels: Record<ApiLifecycleStatus, string> = {
-  ACTIVE: 'Activa',
-  DRAFT: 'Borrador',
-  DEPRECATED: 'Deprecada',
-}
+  ACTIVE: "Activa",
+  DRAFT: "Borrador",
+  DEPRECATED: "Deprecada",
+};
 
 export function ApisPage() {
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState("");
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
 
-  const { apis, createApi } = useApis()
-  
-  function handleCreateApi(data: CreateApiData): boolean {
-    const created = createApi(data);
+  const { apis, createApi, isLoadingApis, apisError, refreshApis } = useApis();
+
+  async function handleCreateApi(data: CreateApiData): Promise<boolean> {
+    const created = await createApi(data);
 
     if (created) {
       setSearch("");
@@ -51,7 +43,6 @@ export function ApisPage() {
     return created;
   }
 
-  
   const filteredApis = useMemo(() => {
     const term = search.trim().toLowerCase();
 
@@ -61,12 +52,12 @@ export function ApisPage() {
         api.description.toLowerCase().includes(term) ||
         api.owner.toLowerCase().includes(term);
 
-      const matchesStatus = statusFilter === "ALL" || api.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "ALL" || api.status === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
   }, [apis, search, statusFilter]);
-
 
   return (
     <div className="apis-page">
@@ -79,7 +70,10 @@ export function ApisPage() {
           </p>
         </div>
 
-        <Button onClick={() => setIsCreateModalOpen(true)}>
+        <Button
+          onClick={() => setIsCreateModalOpen(true)}
+          disabled={isLoadingApis}
+        >
           <Plus size={17} />
           Nueva API
         </Button>
@@ -97,6 +91,25 @@ export function ApisPage() {
           activas
         </span>
       </div>
+
+      {isLoadingApis && (
+        <div className="apis-page__notice" role="status">
+          Cargando APIs desde PostgreSQL...
+        </div>
+      )}
+
+      {apisError && (
+        <div
+          className="apis-page__notice apis-page__notice--error"
+          role="alert"
+        >
+          <span>{apisError}</span>
+
+          <button type="button" onClick={() => void refreshApis()}>
+            Reintentar
+          </button>
+        </div>
+      )}
 
       <Card className="apis-catalog">
         <div className="apis-catalog__header">
@@ -202,9 +215,11 @@ export function ApisPage() {
             </tbody>
           </table>
 
-          {filteredApis.length === 0 && (
+          {!isLoadingApis && !apisError && filteredApis.length === 0 && (
             <div className="apis-catalog__empty">
-              No se encontraron APIs con los filtros seleccionados.
+              {apis.length === 0
+                ? "Todavía no hay APIs registradas en PostgreSQL."
+                : "No se encontraron APIs con los filtros seleccionados."}
             </div>
           )}
         </div>
