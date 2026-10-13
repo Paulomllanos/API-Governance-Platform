@@ -6,6 +6,12 @@ import { ApiContext } from "./ApiContext";
 import type { Api } from "../types/api.types";
 import type { CreateApiData } from "../components/CreateApiModal/CreateApiModal";
 
+import type {
+  GovernanceExecution,
+  RuleResult,
+  CreateEvaluationData,
+} from "../../evaluations/types/evaluation.types";
+
 import { mockVersions } from "../../../mocks/versions";
 
 import type {
@@ -28,6 +34,9 @@ export function ApiProvider({ children }: ApiProviderProps) {
     ...mockVersions,
   ]);
   const [documents, setDocuments] = useState<OpenApiDocument[]>([]);
+
+  const [evaluations, setEvaluations] = useState<GovernanceExecution[]>([]);
+  const [ruleResults] = useState<RuleResult[]>([]);
 
   function createApi(data: CreateApiData): boolean {
     const exists = apis.some(
@@ -151,6 +160,47 @@ export function ApiProvider({ children }: ApiProviderProps) {
     return true;
   }
 
+  function getEvaluationsByDocumentId(
+    documentId: string,
+  ): GovernanceExecution[] {
+    return evaluations.filter(
+      (evaluation) => evaluation.documentId === documentId,
+    );
+  }
+
+  function requestEvaluation(data: CreateEvaluationData): boolean {
+    const documentExists = documents.some(
+      (document) => document.id === data.documentId,
+    );
+
+    if (!documentExists) {
+      return false;
+    }
+
+    const now = new Date().toISOString();
+
+    const newEvaluation: GovernanceExecution = {
+      id: crypto.randomUUID(),
+      documentId: data.documentId,
+      executedBy: "mock-user",
+      status: "PENDING",
+      startedAt: now,
+      completedAt: null,
+      qualityScore: null,
+      hasBlockingIssues: false,
+      totalRules: 0,
+      passedRules: 0,
+      failedRules: 0,
+      warningRules: 0,
+      notApplicableRules: 0,
+      errorMessage: null,
+    };
+
+    setEvaluations((current) => [newEvaluation, ...current]);
+
+    return true;
+  }
+
   return (
     <ApiContext.Provider
       value={{
@@ -165,6 +215,11 @@ export function ApiProvider({ children }: ApiProviderProps) {
         documents,
         getDocumentsByVersionId,
         createDocument,
+
+        evaluations,
+        ruleResults,
+        getEvaluationsByDocumentId,
+        requestEvaluation,
       }}
     >
       {children}

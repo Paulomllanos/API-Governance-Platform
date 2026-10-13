@@ -1,56 +1,65 @@
+import { useEffect, useRef, useState } from "react";
+import { FileCode2, X } from "lucide-react";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
-import {
-  FileCode2,
-  X,
-} from 'lucide-react'
+import type { OpenApiDocument } from "../../types/openapi.types";
 
-import type { OpenApiDocument } from '../../types/openapi.types'
-
-import './OpenApiDocumentsModal.css'
+import "./OpenApiDocumentsModal.css";
 
 interface OpenApiDocumentsModalProps {
-  version: string
-  documents: OpenApiDocument[]
-  onClose: () => void
+  version: string;
+  documents: OpenApiDocument[];
+  onClose: () => void;
+  onRequestEvaluation: (documentId: string) => boolean;
 }
 
 export function OpenApiDocumentsModal({
   version,
   documents,
   onClose,
+  onRequestEvaluation,
 }: OpenApiDocumentsModalProps) {
-  const [selectedDocumentId, setSelectedDocumentId] =
-    useState<string | null>(documents[0]?.id ?? null)
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
+    documents[0]?.id ?? null,
+  );
 
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const selectedDocument = documents.find(
     (document) => document.id === selectedDocumentId,
-  )
+  );
+
+  const [requestError, setRequestError] = useState("");
 
   useEffect(() => {
-    closeButtonRef.current?.focus()
-  }, [])
+    closeButtonRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        onClose()
+      if (event.key === "Escape") {
+        onClose();
       }
     }
 
-    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [onClose])
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
 
+  function handleRequestEvaluation() {
+    if (!selectedDocument) return;
+
+    const created = onRequestEvaluation(selectedDocument.id);
+
+    if (!created) {
+      setRequestError("No fue posible registrar la solicitud de evaluación.");
+      return;
+    }
+
+    onClose();
+  }
   return (
     <div className="openapi-documents-overlay">
       <div
@@ -61,12 +70,8 @@ export function OpenApiDocumentsModal({
       >
         <header className="openapi-documents__header">
           <div>
-            <h2 id="openapi-documents-title">
-              Especificaciones OpenAPI
-            </h2>
-            <p>
-              Documentos asociados a la versión v{version}
-            </p>
+            <h2 id="openapi-documents-title">Especificaciones OpenAPI</h2>
+            <p>Documentos asociados a la versión v{version}</p>
           </div>
 
           <button
@@ -86,13 +91,11 @@ export function OpenApiDocumentsModal({
               <button
                 key={document.id}
                 type="button"
-                className={
-                  `openapi-documents__item ${
-                    selectedDocumentId === document.id
-                      ? 'openapi-documents__item--active'
-                      : ''
-                  }`
-                }
+                className={`openapi-documents__item ${
+                  selectedDocumentId === document.id
+                    ? "openapi-documents__item--active"
+                    : ""
+                }`}
                 onClick={() => setSelectedDocumentId(document.id)}
                 aria-pressed={selectedDocumentId === document.id}
               >
@@ -101,8 +104,7 @@ export function OpenApiDocumentsModal({
                 <span>
                   <strong>{document.fileName}</strong>
                   <small>
-                    {document.format} · OpenAPI{' '}
-                    {document.openApiVersion}
+                    {document.format} · OpenAPI {document.openApiVersion}
                   </small>
                 </span>
               </button>
@@ -122,10 +124,10 @@ export function OpenApiDocumentsModal({
                   <h3>{selectedDocument.fileName}</h3>
 
                   <p>
-                    Registrado el{' '}
-                    {new Date(
-                      selectedDocument.createdAt,
-                    ).toLocaleDateString('es-CL')}
+                    Registrado el{" "}
+                    {new Date(selectedDocument.createdAt).toLocaleDateString(
+                      "es-CL",
+                    )}
                   </p>
                 </div>
 
@@ -149,14 +151,25 @@ export function OpenApiDocumentsModal({
         </div>
 
         <footer className="openapi-documents__footer">
+          {requestError && (
+            <span role="alert" className="openapi-documents__error">
+              {requestError}
+            </span>
+          )}
+
           <button
             type="button"
-            onClick={onClose}
+            className="openapi-documents__evaluate"
+            disabled={!selectedDocument}
+            onClick={handleRequestEvaluation}
           >
+            Solicitar evaluación
+          </button>
+          <button type="button" onClick={onClose}>
             Cerrar
           </button>
         </footer>
       </div>
     </div>
-  )
+  );
 }

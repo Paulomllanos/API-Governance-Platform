@@ -9,7 +9,7 @@ import { ApiVersionsTable } from "../../versions/components/ApiVersionsTable/Api
 import { UploadOpenApiModal } from "../../openapi/components/UploadOpenApiModal/UploadOpenApiModal";
 import type { ApiVersion } from "../../versions/types/version.types";
 
-import { OpenApiDocumentsModal } from '../../openapi/components/OpenApiDocumentsModal/OpenApiDocumentsModal'
+import { OpenApiDocumentsModal } from "../../openapi/components/OpenApiDocumentsModal/OpenApiDocumentsModal";
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
@@ -31,11 +31,17 @@ const statusLabels: Record<ApiLifecycleStatus, string> = {
 
 export function ApiDetailPage() {
   const { apiId } = useParams<{ apiId: string }>();
-  const { getApiById, getVersionsByApiId, createVersion, createDocument, documents } =
-    useApis();
+  const {
+    getApiById,
+    getVersionsByApiId,
+    createVersion,
+    createDocument,
+    documents,
+    requestEvaluation,
+  } = useApis();
 
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
-  const [viewingVersion, setViewingVersion] = useState<ApiVersion | null>(null)
+  const [viewingVersion, setViewingVersion] = useState<ApiVersion | null>(null);
   const api = apiId ? getApiById(apiId) : undefined;
   const apiVersions = apiId ? getVersionsByApiId(apiId) : [];
 
@@ -214,6 +220,9 @@ export function ApiDetailPage() {
           documents={documents.filter(
             (document) => document.versionId === viewingVersion.id,
           )}
+          onRequestEvaluation={(documentId) =>
+            requestEvaluation({ documentId })
+          }
           onClose={() => setViewingVersion(null)}
         />
       )}

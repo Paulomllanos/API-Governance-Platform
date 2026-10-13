@@ -8,6 +8,9 @@ import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
 import { ApisPage } from "../features/apis/pages/ApisPage";
 import { ApiProvider } from '../features/apis/context/ApiProvider'
 import { ApiDetailPage } from '../features/apis/pages/ApiDetailPage'
+import { RulesPage } from '../features/rules/pages/RulesPage'
+import { EvaluationsPage } from '../features/evaluations/pages/EvaluationsPage'
+import { EvaluationDetailPage } from '../features/evaluations/pages/EvaluationDetailPage'
 
 export const router = createBrowserRouter([
   {
@@ -43,6 +46,18 @@ export const router = createBrowserRouter([
       {
         path: "apis/:apiId",
         element: <ApiDetailPage />,
+      },
+      {
+        path: "rules",
+        element: <RulesPage />,
+      },
+      {
+        path: "evaluations",
+        element: <EvaluationsPage />,
+      },
+      {
+        path: "evaluations/:evaluationId",
+        element: <EvaluationDetailPage />,
       },
     ],
   },

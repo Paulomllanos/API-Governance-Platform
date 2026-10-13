@@ -14,23 +14,38 @@ import type {
   CreateOpenApiDocumentData,
 } from '../../openapi/types/openapi.types'
 
+import type {
+  GovernanceExecution,
+  RuleResult,
+  CreateEvaluationData,
+} from '../../evaluations/types/evaluation.types'
+
 export interface ApiContextValue {
-    apis: Api[]
-    createApi: (data: CreateApiData) => boolean
-    getApiById: (id: string) => Api | undefined
-    
-    versions: ApiVersion[]
-    getVersionsByApiId: (apiId: string) => ApiVersion[]
-    createVersion: (data: CreateApiVersionData) => boolean
-    documents: OpenApiDocument[]
+  apis: Api[]
+  createApi: (data: CreateApiData) => boolean
+  getApiById: (id: string) => Api | undefined
 
-    getDocumentsByVersionId: (
-        versionId: string,
-    ) => OpenApiDocument[]
+  versions: ApiVersion[]
+  getVersionsByApiId: (apiId: string) => ApiVersion[]
+  createVersion: (data: CreateApiVersionData) => boolean
+  documents: OpenApiDocument[]
 
-    createDocument: (
-        data: CreateOpenApiDocumentData,
-    ) => boolean
+  getDocumentsByVersionId: (
+    versionId: string,
+  ) => OpenApiDocument[]
+
+  createDocument: (
+    data: CreateOpenApiDocumentData,
+  ) => boolean
+
+  evaluations: GovernanceExecution[]
+  ruleResults: RuleResult[]
+  getEvaluationsByDocumentId: (
+    documentId: string,
+  ) => GovernanceExecution[]
+  requestEvaluation: (
+    data: CreateEvaluationData,
+  ) => boolean
 }
 
 export const ApiContext = createContext<ApiContextValue | undefined>(

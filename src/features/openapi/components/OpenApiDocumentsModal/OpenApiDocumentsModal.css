@@ -244,3 +244,33 @@
     padding-right: 18px;
   }
 }
+
+.openapi-documents__footer {
+  align-items: center;
+  gap: 12px;
+}
+
+.openapi-documents__evaluate {
+  min-height: 40px;
+  padding: 0 18px;
+
+  border: none;
+  border-radius: 8px;
+  background: var(--color-primary);
+
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.openapi-documents__evaluate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.openapi-documents__error {
+  margin-right: auto;
+  color: var(--color-danger);
+  font-size: 11px;
+}
