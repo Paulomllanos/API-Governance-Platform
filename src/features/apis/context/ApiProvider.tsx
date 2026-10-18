@@ -1,4 +1,4 @@
-import { ApiContext } from './ApiContext'
+import { ApiContext } from "./ApiContext";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { fetchApis, createApiRequest } from "../services/apis.api";
@@ -12,7 +12,10 @@ import type {
   CreateEvaluationData,
 } from "../../evaluations/types/evaluation.types";
 
-import { mockVersions } from "../../../mocks/versions";
+import {
+  fetchVersionsByApiId,
+  createVersionRequest,
+} from "../../versions/services/versions.api";
 
 import type {
   ApiVersion,
@@ -24,6 +27,11 @@ import type {
   CreateOpenApiDocumentData,
 } from "../../openapi/types/openapi.types";
 
+import {
+  createDocumentRequest,
+  fetchDocumentsByVersionId,
+} from "../../openapi/services/documents.api";
+
 interface ApiProviderProps {
   children: ReactNode;
 }
@@ -32,10 +40,15 @@ export function ApiProvider({ children }: ApiProviderProps) {
   const [apis, setApis] = useState<Api[]>([]);
   const [isLoadingApis, setIsLoadingApis] = useState(true);
   const [apisError, setApisError] = useState<string | null>(null);
-  const [versions, setVersions] = useState<ApiVersion[]>(() => [
-    ...mockVersions,
-  ]);
+  const [versions, setVersions] = useState<ApiVersion[]>([]);
+
+  const [isLoadingVersions, setIsLoadingVersions] = useState(false);
+
+  const [versionsError, setVersionsError] = useState<string | null>(null);
   const [documents, setDocuments] = useState<OpenApiDocument[]>([]);
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
+
+  const [documentsError, setDocumentsError] = useState<string | null>(null);
 
   const [evaluations, setEvaluations] = useState<GovernanceExecution[]>([]);
   const [ruleResults] = useState<RuleResult[]>([]);
@@ -84,11 +97,51 @@ export function ApiProvider({ children }: ApiProviderProps) {
     return apis.find((api) => api.id === id);
   }
 
+  async function loadVersionsByApiId(apiId: string): Promise<void> {
+    setIsLoadingVersions(true);
+    setIsLoadingDocuments(true);
+    setVersionsError(null);
+    setDocumentsError(null);
+
+    try {
+      const backendVersions = await fetchVersionsByApiId(apiId);
+
+      const documentLists = await Promise.all(
+        backendVersions.map((version) => fetchDocumentsByVersionId(version.id)),
+      );
+
+      const backendDocuments = documentLists.flat();
+
+      const versionIds = new Set(backendVersions.map((version) => version.id));
+
+      setVersions((current) => [
+        ...current.filter((version) => version.apiId !== apiId),
+        ...backendVersions,
+      ]);
+
+      setDocuments((current) => [
+        ...current.filter((document) => !versionIds.has(document.versionId)),
+        ...backendDocuments.map((document) => ({
+          ...document,
+          content: "",
+        })),
+      ]);
+    } catch {
+      setVersionsError(
+        "No fue posible cargar las versiones y documentos desde PostgreSQL.",
+      );
+      setDocumentsError("No fue posible recuperar los documentos OpenAPI.");
+    } finally {
+      setIsLoadingVersions(false);
+      setIsLoadingDocuments(false);
+    }
+  }
+
   function getVersionsByApiId(apiId: string): ApiVersion[] {
     return versions.filter((item) => item.apiId === apiId);
   }
 
-  function createVersion(data: CreateApiVersionData): boolean {
+  async function createVersion(data: CreateApiVersionData): Promise<boolean> {
     const apiExists = apis.some((api) => api.id === data.apiId);
 
     if (!apiExists) {
@@ -97,31 +150,28 @@ export function ApiProvider({ children }: ApiProviderProps) {
 
     const normalizedVersion = data.version.trim();
 
-    if (!/^\d+\.\d+\.\d+$/.test(normalizedVersion)) {
+    if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(normalizedVersion)) {
       return false;
     }
 
     const versionExists = versions.some(
-      (item) => item.apiId === data.apiId && item.version === normalizedVersion,
+      (version) =>
+        version.apiId === data.apiId && version.version === normalizedVersion,
     );
 
     if (versionExists) {
       return false;
     }
 
-    const now = new Date().toISOString();
-
-    const newVersion: ApiVersion = {
-      id: crypto.randomUUID(),
-      apiId: data.apiId,
+    const createdVersion = await createVersionRequest({
+      ...data,
       version: normalizedVersion,
       description: data.description.trim(),
-      status: "DRAFT",
-      createdAt: now,
-      updatedAt: now,
-    };
+    });
 
-    setVersions((current) => [...current, newVersion]);
+    setVersions((current) => [...current, createdVersion]);
+
+    await refreshApis();
 
     return true;
   }
@@ -130,8 +180,9 @@ export function ApiProvider({ children }: ApiProviderProps) {
     return documents.filter((document) => document.versionId === versionId);
   }
 
-  function createDocument(data: CreateOpenApiDocumentData): boolean {
-    // Verificar que la versión exista.
+  async function createDocument(
+    data: CreateOpenApiDocumentData,
+  ): Promise<boolean> {
     const versionExists = versions.some(
       (version) => version.id === data.versionId,
     );
@@ -140,39 +191,14 @@ export function ApiProvider({ children }: ApiProviderProps) {
       return false;
     }
 
-    // Rechazar contenido vacío.
-    if (!data.content.trim()) {
-      return false;
-    }
-
-    // Validar los metadatos básicos.
-    if (!data.fileName.trim()) {
-      return false;
-    }
-
-    if (!["JSON", "YAML"].includes(data.format)) {
-      return false;
-    }
-
-    // No registrar documentos que todavía no
-    // hayan superado la validación estructural.
-    if (!data.isValid) {
-      return false;
-    }
-
-    const newDocument: OpenApiDocument = {
-      id: crypto.randomUUID(),
+    const createdDocument = await createDocumentRequest({
       versionId: data.versionId,
       fileName: data.fileName.trim(),
       content: data.content,
       format: data.format,
-      openApiVersion: data.openApiVersion,
-      isValid: true,
-      uploadedBy: "mock-user",
-      createdAt: new Date().toISOString(),
-    };
+    });
 
-    setDocuments((current) => [...current, newDocument]);
+    setDocuments((current) => [...current, createdDocument]);
 
     return true;
   }
@@ -218,6 +244,27 @@ export function ApiProvider({ children }: ApiProviderProps) {
     return true;
   }
 
+  async function loadDocumentsByVersionId(versionId: string): Promise<void> {
+    setIsLoadingDocuments(true);
+    setDocumentsError(null);
+
+    try {
+      const summaries = await fetchDocumentsByVersionId(versionId);
+
+      setDocuments((current) => [
+        ...current.filter((document) => document.versionId !== versionId),
+        ...summaries.map((document) => ({
+          ...document,
+          content: "",
+        })),
+      ]);
+    } catch {
+      setDocumentsError("No fue posible cargar los documentos OpenAPI.");
+    } finally {
+      setIsLoadingDocuments(false);
+    }
+  }
+
   return (
     <ApiContext.Provider
       value={{
@@ -231,10 +278,16 @@ export function ApiProvider({ children }: ApiProviderProps) {
         versions,
         getVersionsByApiId,
         createVersion,
+        loadVersionsByApiId,
+        isLoadingVersions,
+        versionsError,
 
         documents,
         getDocumentsByVersionId,
         createDocument,
+        loadDocumentsByVersionId,
+        isLoadingDocuments,
+        documentsError,
 
         evaluations,
         ruleResults,

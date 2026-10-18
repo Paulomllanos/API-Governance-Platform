@@ -11,6 +11,8 @@ interface BackendApi {
   status: ApiLifecycleStatus
   createdAt: string
   updatedAt: string
+  versionCount?: number
+  latestVersion?: string | null
 }
 
 export interface CreateBackendApiData {
@@ -63,9 +65,12 @@ function mapBackendApi(api: BackendApi): Api {
     owner: api.owner,
     status: api.status,
 
-    // Datos derivados que todavía no expone NestJS.
-    latestVersion: '—',
-    versionCount: 0,
+
+    latestVersion: api.latestVersion
+      ? `v${api.latestVersion}`
+      : '—',
+
+    versionCount: api.versionCount ?? 0,
 
     updatedAt: api.updatedAt.slice(0, 10),
   }

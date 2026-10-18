@@ -3,6 +3,8 @@ import { FileCode2, X } from "lucide-react";
 
 import type { OpenApiDocument } from "../../types/openapi.types";
 
+import { fetchDocumentById } from "../../services/documents.api";
+
 import "./OpenApiDocumentsModal.css";
 
 interface OpenApiDocumentsModalProps {
@@ -30,6 +32,10 @@ export function OpenApiDocumentsModal({
 
   const [requestError, setRequestError] = useState("");
 
+  const [previewContent, setPreviewContent] = useState("");
+  const [isLoadingContent, setIsLoadingContent] = useState(false);
+  const [contentError, setContentError] = useState("");
+
   useEffect(() => {
     closeButtonRef.current?.focus();
   }, []);
@@ -47,6 +53,36 @@ export function OpenApiDocumentsModal({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [onClose]);
+
+  useEffect(() => {
+    if (!selectedDocumentId) return;
+
+    let active = true;
+
+    setPreviewContent("");
+    setContentError("");
+    setIsLoadingContent(true);
+
+    void fetchDocumentById(selectedDocumentId)
+      .then((document) => {
+        if (!active) return;
+        setPreviewContent(document.content);
+      })
+      .catch(() => {
+        if (!active) return;
+
+        setContentError("No fue posible obtener el contenido del documento.");
+      })
+      .finally(() => {
+        if (active) {
+          setIsLoadingContent(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [selectedDocumentId]);
 
   function handleRequestEvaluation() {
     if (!selectedDocument) return;
@@ -140,10 +176,22 @@ export function OpenApiDocumentsModal({
                 Contenido de la especificación
               </label>
 
+              {contentError && (
+                <p role="alert" className="openapi-documents__error">
+                  {contentError}
+                </p>
+              )}
+
               <textarea
                 id="openapi-document-content"
                 readOnly
-                value={selectedDocument.content}
+                value={previewContent}
+                placeholder={
+                  isLoadingContent
+                    ? "Cargando contenido desde PostgreSQL..."
+                    : "Selecciona un documento para ver su contenido."
+                }
+                aria-busy={isLoadingContent}
                 rows={16}
               />
             </section>

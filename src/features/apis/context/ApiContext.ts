@@ -30,7 +30,18 @@ export interface ApiContextValue {
 
   versions: ApiVersion[]
   getVersionsByApiId: (apiId: string) => ApiVersion[]
-  createVersion: (data: CreateApiVersionData) => boolean
+
+  createVersion: (
+    data: CreateApiVersionData,
+  ) => Promise<boolean>
+
+  loadVersionsByApiId: (
+    apiId: string,
+  ) => Promise<void>
+
+  isLoadingVersions: boolean
+  versionsError: string | null
+
   documents: OpenApiDocument[]
 
   getDocumentsByVersionId: (
@@ -39,7 +50,7 @@ export interface ApiContextValue {
 
   createDocument: (
     data: CreateOpenApiDocumentData,
-  ) => boolean
+  ) => Promise<boolean>
 
   evaluations: GovernanceExecution[]
   ruleResults: RuleResult[]
@@ -50,8 +61,13 @@ export interface ApiContextValue {
     data: CreateEvaluationData,
   ) => boolean
 
-  
-  
+  loadDocumentsByVersionId: (
+    versionId: string,
+  ) => Promise<void>
+
+  isLoadingDocuments: boolean
+  documentsError: string | null
+
 
 }
 

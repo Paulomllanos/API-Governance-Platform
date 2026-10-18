@@ -11,7 +11,7 @@ import type { ApiVersion } from "../../versions/types/version.types";
 
 import { OpenApiDocumentsModal } from "../../openapi/components/OpenApiDocumentsModal/OpenApiDocumentsModal";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 
 import { Button } from "../../../components/ui/Button/Button";
@@ -41,6 +41,9 @@ export function ApiDetailPage() {
     isLoadingApis,
     apisError,
     refreshApis,
+    loadVersionsByApiId,
+    isLoadingVersions,
+    versionsError,
   } = useApis();
 
   const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
@@ -73,6 +76,15 @@ export function ApiDetailPage() {
     },
     {},
   );
+
+  useEffect(() => {
+    if (!apiId) return;
+
+    void loadVersionsByApiId(apiId);
+
+    // La carga se ejecuta cuando cambia la API seleccionada.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiId]);
 
   if (isLoadingApis) {
     return (
@@ -119,8 +131,10 @@ export function ApiDetailPage() {
     );
   }
 
-  function handleCreateVersion(data: CreateApiVersionData): boolean {
-    return createVersion(data);
+  async function handleCreateVersion(
+    data: CreateApiVersionData,
+  ): Promise<boolean> {
+    return await createVersion(data);
   }
 
   return (
@@ -214,18 +228,39 @@ export function ApiDetailPage() {
             <p>Consulta y administra las versiones registradas de esta API.</p>
           </div>
 
-          <Button onClick={() => setIsVersionModalOpen(true)}>
+          <Button
+            disabled={isLoadingVersions || Boolean(versionsError)}
+            onClick={() => setIsVersionModalOpen(true)}
+          >
             <Plus size={17} />
             Nueva versión
           </Button>
         </div>
 
-        <ApiVersionsTable
-          versions={apiVersions}
-          onUploadDocument={setSelectedVersion}
-          documentCounts={documentCounts}
-          onViewDocuments={setViewingVersion}
-        />
+        {isLoadingVersions ? (
+          <p role="status">Cargando versiones desde PostgreSQL...</p>
+        ) : versionsError ? (
+          <div role="alert">
+            <p>{versionsError}</p>
+
+            <Button
+              onClick={() => {
+                if (apiId) {
+                  void loadVersionsByApiId(apiId);
+                }
+              }}
+            >
+              Reintentar
+            </Button>
+          </div>
+        ) : (
+          <ApiVersionsTable
+            versions={apiVersions}
+            onUploadDocument={setSelectedVersion}
+            documentCounts={documentCounts}
+            onViewDocuments={setViewingVersion}
+          />
+        )}
       </Card>
 
       {isVersionModalOpen && (
