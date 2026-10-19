@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FileCode2, X } from "lucide-react";
 
 import type { OpenApiDocument } from "../../types/openapi.types";
@@ -11,7 +12,7 @@ interface OpenApiDocumentsModalProps {
   version: string;
   documents: OpenApiDocument[];
   onClose: () => void;
-  onRequestEvaluation: (documentId: string) => boolean;
+  onRequestEvaluation: (documentId: string) => Promise<string>;
 }
 
 export function OpenApiDocumentsModal({
@@ -31,6 +32,9 @@ export function OpenApiDocumentsModal({
   );
 
   const [requestError, setRequestError] = useState("");
+  const [isRequestingEvaluation, setIsRequestingEvaluation] = useState(false);
+
+  const navigate = useNavigate();
 
   const [previewContent, setPreviewContent] = useState("");
   const [isLoadingContent, setIsLoadingContent] = useState(false);
@@ -42,7 +46,7 @@ export function OpenApiDocumentsModal({
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && !isRequestingEvaluation) {
         onClose();
       }
     }
@@ -52,7 +56,7 @@ export function OpenApiDocumentsModal({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose]);
+  }, [onClose, isRequestingEvaluation]);
 
   useEffect(() => {
     if (!selectedDocumentId) return;
@@ -84,18 +88,35 @@ export function OpenApiDocumentsModal({
     };
   }, [selectedDocumentId]);
 
-  function handleRequestEvaluation() {
-    if (!selectedDocument) return;
-
-    const created = onRequestEvaluation(selectedDocument.id);
-
-    if (!created) {
-      setRequestError("No fue posible registrar la solicitud de evaluación.");
+  async function handleRequestEvaluation() {
+    if (!selectedDocument || isRequestingEvaluation) {
       return;
     }
 
-    onClose();
+    setRequestError("");
+    setIsRequestingEvaluation(true);
+
+    try {
+      const evaluationId = await onRequestEvaluation(selectedDocument.id);
+
+      onClose();
+
+      void navigate(`/app/evaluations/${evaluationId}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+
+      if (message.includes("404")) {
+        setRequestError("El documento ya no existe en PostgreSQL.");
+      } else {
+        setRequestError(
+          "No fue posible registrar la evaluación. Verifica la conexión con NestJS.",
+        );
+      }
+    } finally {
+      setIsRequestingEvaluation(false);
+    }
   }
+
   return (
     <div className="openapi-documents-overlay">
       <div
@@ -116,6 +137,7 @@ export function OpenApiDocumentsModal({
             className="openapi-documents__close"
             onClick={onClose}
             aria-label="Cerrar documentos"
+            disabled={isRequestingEvaluation}
           >
             <X size={20} />
           </button>
@@ -208,12 +230,21 @@ export function OpenApiDocumentsModal({
           <button
             type="button"
             className="openapi-documents__evaluate"
-            disabled={!selectedDocument}
-            onClick={handleRequestEvaluation}
+            disabled={!selectedDocument || isRequestingEvaluation}
+            onClick={() => {
+              void handleRequestEvaluation();
+            }}
           >
-            Solicitar evaluación
+            {isRequestingEvaluation
+              ? "Ejecutando evaluación..."
+              : "Solicitar evaluación"}
           </button>
-          <button type="button" onClick={onClose}>
+
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isRequestingEvaluation}
+          >
             Cerrar
           </button>
         </footer>

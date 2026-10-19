@@ -255,3 +255,22 @@
     font-size: 24px;
   }
 }
+
+
+.evaluation-detail__evidence {
+  margin: 0;
+  padding: 10px 12px;
+  max-width: 360px;
+  max-height: 180px;
+
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+
+  border-radius: 8px;
+  background: rgba(128, 128, 128, 0.08);
+
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}

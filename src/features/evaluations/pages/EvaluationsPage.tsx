@@ -1,102 +1,108 @@
+import { useEffect, useMemo, useState } from "react";
+import { ClipboardCheck, Search } from "lucide-react";
+import { Link } from "react-router-dom";
 
-import { useMemo, useState } from 'react'
-import { ClipboardCheck, Search } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Card } from "../../../components/ui/Card/Card";
+import {
+  fetchEvaluations,
+  type BackendEvaluation,
+} from "../services/evaluations.api";
 
-import { Card } from '../../../components/ui/Card/Card'
-import { useApis } from '../../apis/hooks/useApis'
+import type { EvaluationStatus } from "../types/evaluation.types";
 
-import type {
-  EvaluationStatus,
-} from '../types/evaluation.types'
+import "./EvaluationsPage.css";
 
-import './EvaluationsPage.css'
-
-type StatusFilter = EvaluationStatus | 'ALL'
+type StatusFilter = EvaluationStatus | "ALL";
 
 const statusLabels: Record<EvaluationStatus, string> = {
-  PENDING: 'Pendiente',
-  RUNNING: 'En ejecución',
-  COMPLETED: 'Completada',
-  FAILED: 'Fallida',
-}
+  PENDING: "Pendiente",
+  RUNNING: "En ejecución",
+  COMPLETED: "Completada",
+  FAILED: "Fallida",
+};
 
 function formatDate(value: string): string {
-  return new Date(value).toLocaleString('es-CL', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  })
+  return new Date(value).toLocaleString("es-CL", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
 }
 
 export function EvaluationsPage() {
-  const {
-    evaluations,
-    documents,
-    versions,
-    apis,
-  } = useApis()
+  const [evaluations, setEvaluations] = useState<BackendEvaluation[]>([]);
 
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] =
-    useState<StatusFilter>('ALL')
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    void fetchEvaluations()
+      .then((data) => {
+        if (active) {
+          setEvaluations(data);
+          setLoadError(null);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setLoadError(
+            "No fue posible consultar las evaluaciones desde NestJS.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
 
   const rows = useMemo(() => {
-    return evaluations.map((evaluation) => {
-      const document = documents.find(
-        (item) => item.id === evaluation.documentId,
-      )
-
-      const version = versions.find(
-        (item) => item.id === document?.versionId,
-      )
-
-      const api = apis.find(
-        (item) => item.id === version?.apiId,
-      )
-
-      return {
-        evaluation,
-        document,
-        version,
-        api,
-      }
-    })
-  }, [evaluations, documents, versions, apis])
+    return evaluations.map((evaluation) => ({
+      evaluation,
+      document: evaluation.document,
+      version: evaluation.document?.apiVersion,
+      api: evaluation.document?.apiVersion.api,
+    }));
+  }, [evaluations]);
 
   const filteredRows = useMemo(() => {
-    const term = search.trim().toLowerCase()
+    const term = search.trim().toLowerCase();
 
     return rows
       .filter(({ evaluation, document, api }) => {
         const matchesSearch =
           evaluation.id.toLowerCase().includes(term) ||
-          (document?.fileName ?? '')
-            .toLowerCase()
-            .includes(term) ||
-          (api?.name ?? '')
-            .toLowerCase()
-            .includes(term)
+          (document?.fileName ?? "").toLowerCase().includes(term) ||
+          (api?.name ?? "").toLowerCase().includes(term);
 
         const matchesStatus =
-          statusFilter === 'ALL' ||
-          evaluation.status === statusFilter
+          statusFilter === "ALL" || evaluation.status === statusFilter;
 
-        return matchesSearch && matchesStatus
+        return matchesSearch && matchesStatus;
       })
       .sort(
         (a, b) =>
-          new Date(b.evaluation.startedAt).getTime() -
-          new Date(a.evaluation.startedAt).getTime(),
-      )
-  }, [rows, search, statusFilter])
+          new Date(b.evaluation.requestedAt).getTime() -
+          new Date(a.evaluation.requestedAt).getTime(),
+      );
+  }, [rows, search, statusFilter]);
 
   const completedCount = evaluations.filter(
-    (evaluation) => evaluation.status === 'COMPLETED',
-  ).length
+    (evaluation) => evaluation.status === "COMPLETED",
+  ).length;
 
   const runningCount = evaluations.filter(
-    (evaluation) => evaluation.status === 'RUNNING',
-  ).length
+    (evaluation) => evaluation.status === "RUNNING",
+  ).length;
 
   return (
     <div className="evaluations-page">
@@ -107,6 +113,12 @@ export function EvaluationsPage() {
           especificaciones OpenAPI.
         </p>
       </header>
+
+      {isLoading && (
+        <p role="status">Cargando evaluaciones desde PostgreSQL...</p>
+      )}
+
+      {loadError && <p role="alert">{loadError}</p>}
 
       <section
         className="evaluations-page__metrics"
@@ -168,7 +180,7 @@ export function EvaluationsPage() {
           </select>
         </div>
 
-        {filteredRows.length === 0 ? (
+        {!isLoading && !loadError && filteredRows.length === 0 ? (
           <div className="evaluations-page__empty">
             <div className="evaluations-page__empty-icon">
               <ClipboardCheck size={25} />
@@ -186,7 +198,7 @@ export function EvaluationsPage() {
                 : "Prueba con otros criterios de búsqueda o estado."}
             </p>
           </div>
-        ) : (
+        ) : !isLoading && !loadError ?(
           <div className="evaluations-page__table-scroll">
             <table className="evaluations-page__table">
               <thead>
@@ -223,12 +235,14 @@ export function EvaluationsPage() {
                     </td>
 
                     <td>
-                      {evaluation.qualityScore === null
-                        ? "—"
-                        : `${evaluation.qualityScore}/100`}
+                      {evaluation.scoreAssessment?.score != null
+                        ? `${evaluation.scoreAssessment.score}/100 (preliminar)`
+                        : evaluation.qualityScore != null
+                          ? `${evaluation.qualityScore}/100`
+                          : "—"}
                     </td>
 
-                    <td>{formatDate(evaluation.startedAt)}</td>
+                    <td>{formatDate(evaluation.requestedAt)}</td>
 
                     <td>
                       <Link
@@ -244,7 +258,7 @@ export function EvaluationsPage() {
               </tbody>
             </table>
           </div>
-        )}
+        ): null}
       </Card>
     </div>
   );

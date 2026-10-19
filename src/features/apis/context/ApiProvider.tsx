@@ -32,6 +32,11 @@ import {
   fetchDocumentsByVersionId,
 } from "../../openapi/services/documents.api";
 
+import {
+  createEvaluationRequest,
+  executeEvaluationRequest,
+} from "../../evaluations/services/evaluations.api";
+
 interface ApiProviderProps {
   children: ReactNode;
 }
@@ -211,37 +216,39 @@ export function ApiProvider({ children }: ApiProviderProps) {
     );
   }
 
-  function requestEvaluation(data: CreateEvaluationData): boolean {
-    const documentExists = documents.some(
-      (document) => document.id === data.documentId,
-    );
+  async function requestEvaluation(
+    data: CreateEvaluationData,
+  ): Promise<string> {
+    // NestJS comprueba que el documento exista y registra
+    // una evaluación real en estado PENDING.
+    const createdEvaluation = await createEvaluationRequest(data.documentId);
 
-    if (!documentExists) {
-      return false;
+    // Conservamos el registro real en el contexto para
+    // mantener compatibilidad con otros consumidores.
+    setEvaluations((current) => [
+      createdEvaluation,
+      ...current.filter((item) => item.id !== createdEvaluation.id),
+    ]);
+
+    try {
+      // El backend cambia el estado a RUNNING,
+      // ejecuta las reglas y persiste sus resultados.
+      const executedEvaluation = await executeEvaluationRequest(
+        createdEvaluation.id,
+      );
+
+      setEvaluations((current) =>
+        current.map((item) =>
+          item.id === executedEvaluation.id ? executedEvaluation : item,
+        ),
+      );
+    } catch {
+      // La evaluación ya existe en PostgreSQL.
+      // Devolvemos su ID para consultar el estado real
+      // en la página de detalle, incluso si la ejecución falló.
     }
 
-    const now = new Date().toISOString();
-
-    const newEvaluation: GovernanceExecution = {
-      id: crypto.randomUUID(),
-      documentId: data.documentId,
-      executedBy: "mock-user",
-      status: "PENDING",
-      startedAt: now,
-      completedAt: null,
-      qualityScore: null,
-      hasBlockingIssues: false,
-      totalRules: 0,
-      passedRules: 0,
-      failedRules: 0,
-      warningRules: 0,
-      notApplicableRules: 0,
-      errorMessage: null,
-    };
-
-    setEvaluations((current) => [newEvaluation, ...current]);
-
-    return true;
+    return createdEvaluation.id;
   }
 
   async function loadDocumentsByVersionId(versionId: string): Promise<void> {

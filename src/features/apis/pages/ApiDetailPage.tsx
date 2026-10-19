@@ -23,6 +23,7 @@ import type { ApiLifecycleStatus } from "../types/api.types";
 
 import "./ApiDetailPage.css";
 
+
 const statusLabels: Record<ApiLifecycleStatus, string> = {
   ACTIVE: "Activa",
   DRAFT: "Borrador",

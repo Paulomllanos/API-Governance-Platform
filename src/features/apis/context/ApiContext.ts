@@ -58,8 +58,8 @@ export interface ApiContextValue {
     documentId: string,
   ) => GovernanceExecution[]
   requestEvaluation: (
-    data: CreateEvaluationData,
-  ) => boolean
+  data: CreateEvaluationData,
+) => Promise<string>
 
   loadDocumentsByVersionId: (
     versionId: string,

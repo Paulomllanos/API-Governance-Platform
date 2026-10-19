@@ -16,7 +16,8 @@ export interface GovernanceExecution {
 
   status: EvaluationStatus
 
-  startedAt: string
+  requestedAt: string
+  startedAt: string | null
   completedAt: string | null
 
   qualityScore: number | null
@@ -29,7 +30,22 @@ export interface GovernanceExecution {
   notApplicableRules: number
 
   errorMessage: string | null
+  
+  scoreAssessment?: ScoreAssessment | null
 }
+
+
+export interface ScoreAssessment {
+  score: number | null
+  executedRules: number
+  expectedRules: number
+  applicableRules: number
+  excludedRules: number
+  coveragePercentage: number
+  isProvisional: boolean
+  criticalFailuresDetectedInExecutedRules: boolean
+}
+
 
 export interface RuleResult {
   id: string
