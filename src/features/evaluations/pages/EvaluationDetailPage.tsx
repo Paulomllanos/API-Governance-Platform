@@ -17,6 +17,16 @@ import { EvaluationResultsFilters } from "../components/EvaluationResultsFilters
 
 import { EvaluationFindingsSummary } from "../components/EvaluationFindingsSummary";
 
+
+import {
+  QualityScoreCard,
+} from "../../../components/evaluations/QualityScoreCard";
+
+import {
+  resolveQualityScore,
+} from "../../../components/evaluations/resolveQualityScore";
+
+
 const statusLabels: Record<EvaluationStatus, string> = {
   PENDING: "Pendiente",
   RUNNING: "En ejecución",
@@ -110,7 +120,8 @@ export function EvaluationDetailPage() {
 
   const results = evaluation.results ?? [];
 
-  const preliminaryScore = evaluation.scoreAssessment?.score;
+  // Prioriza el Quality Score definitivo sobre el provisional.
+  const quality = resolveQualityScore(evaluation);
 
   const expectedRules = evaluation.scoreAssessment?.expectedRules ?? 18;
 
@@ -150,28 +161,21 @@ export function EvaluationDetailPage() {
         </span>
       </header>
 
+      <QualityScoreCard
+        score={quality.score}
+        source={quality.source}
+        hasBlockingIssues={quality.hasBlockingIssues}
+        totalRules={evaluation.totalRules}
+        passedRules={evaluation.passedRules}
+        failedRules={evaluation.failedRules}
+        warningRules={evaluation.warningRules}
+        notApplicableRules={evaluation.notApplicableRules}
+      />
+
       <section
         className="evaluation-detail__metrics"
         aria-label="Resumen de evaluación"
       >
-        <Card className="evaluation-detail__metric">
-          <span>Quality Score</span>
-
-          <strong>
-            {isCompleted && preliminaryScore != null
-              ? `${preliminaryScore}/100`
-              : isCompleted && evaluation.qualityScore != null
-                ? `${evaluation.qualityScore}/100`
-                : "—"}
-          </strong>
-
-          <small>
-            {isCompleted && preliminaryScore != null
-              ? "Puntuación preliminar del catálogo implementado"
-              : "Sin puntuación disponible"}
-          </small>
-        </Card>
-
         <Card className="evaluation-detail__metric">
           <span>Reglas evaluadas</span>
           <strong>{evaluatedCount}</strong>
@@ -225,10 +229,10 @@ export function EvaluationDetailPage() {
             <strong>{evaluation.scoreAssessment.coveragePercentage}%</strong>
           </p>
 
-          {evaluation.scoreAssessment.isProvisional && (
+          {quality.source === "PROVISIONAL" && (
             <p>
-              El Quality Score es preliminar porque todavía no se ha
-              implementado el catálogo completo.
+              Esta evaluación utiliza una puntuación provisional calculada a
+              partir de resultados históricos.
             </p>
           )}
         </Card>

@@ -1,115 +1,132 @@
-
 import {
   createContext,
   useContext,
   useState,
+  useEffect,
   type ReactNode,
-} from 'react'
+} from "react";
 
-interface User {
-  name: string
-  email: string
-  role: string
+import { subscribeToSessionCleared } from "../services/auth-token";
+
+import {
+  login as loginApi,
+  logout as logoutApi,
+  fetchAuthenticatedUser,
+} from "../services/auth.api";
+
+import type { AppRole, AuthenticatedUser } from "../types/auth.types";
+
+// Mantiene compatibilidad con componentes existentes
+// que utilizan user.name y user.role.
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  roles: AppRole[];
 }
 
 interface AuthContextValue {
-  user: User | null
-  isAuthenticated: boolean
-  login: (email: string) => void
-  logout: () => void
+  user: User | null;
+  isAuthenticated: boolean;
+
+  login: (email: string, password: string) => Promise<void>;
+
+  logout: () => void;
+
+  refreshUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(
-  undefined,
-)
-
-const AUTH_STORAGE_KEY = 'api-governance-mock-user'
-
-function getStoredUser(): User | null {
-  try {
-    const storedUser = sessionStorage.getItem(AUTH_STORAGE_KEY)
-
-    if (!storedUser) {
-      return null
-    }
-
-    const parsed: unknown = JSON.parse(storedUser)
-
-    if (
-      typeof parsed !== 'object' ||
-      parsed === null ||
-      !('name' in parsed) ||
-      typeof parsed.name !== 'string' ||
-      !('email' in parsed) ||
-      typeof parsed.email !== 'string' ||
-      !('role' in parsed) ||
-      typeof parsed.role !== 'string'
-    ) {
-      sessionStorage.removeItem(AUTH_STORAGE_KEY)
-      return null
-    }
-
-    return {
-      name: parsed.name,
-      email: parsed.email,
-      role: parsed.role,
-    }
-  } catch {
-    return null
-  }
-}
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 interface AuthProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
-export function AuthProvider({
-  children,
-}: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(getStoredUser)
+const ROLE_LABELS: Record<AppRole, string> = {
+  ADMIN: "Administrador",
+  REVIEWER: "Revisor",
+  DEVELOPER: "Desarrollador",
+};
 
-  const login = (email: string) => {
-    const authenticatedUser: User = {
-      name: 'Paulo',
-      email,
-      role: 'Administrador',
+function mapAuthenticatedUser(authenticatedUser: AuthenticatedUser): User {
+  const primaryRole = authenticatedUser.roles[0];
+
+  return {
+    id: authenticatedUser.id,
+    name: authenticatedUser.displayName,
+    email: authenticatedUser.email,
+    role: primaryRole ? ROLE_LABELS[primaryRole] : "Sin rol asignado",
+    roles: authenticatedUser.roles,
+  };
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  // La sesión comienza sin autenticar.
+  // No recuperamos usuarios simulados de sessionStorage.
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    return subscribeToSessionCleared(() => {
+      setUser(null);
+    });
+  }, []);
+
+  const login = async (email: string, password: string): Promise<void> => {
+    // Invalidar primero cualquier sesión anterior.
+    logoutApi();
+    setUser(null);
+
+    // NestJS verifica las credenciales y devuelve el JWT.
+    const response = await loginApi({
+      email: email.trim(),
+      password,
+    });
+
+    // auth.api.ts ya guarda el token en memoria.
+    // Aquí conservamos los datos del usuario.
+    setUser(mapAuthenticatedUser(response.user));
+  };
+
+  const logout = (): void => {
+    logoutApi();
+    setUser(null);
+  };
+
+  const refreshUser = async (): Promise<void> => {
+    try {
+      // Consulta GET /auth/me con el JWT vigente.
+      const authenticatedUser = await fetchAuthenticatedUser();
+
+      setUser(mapAuthenticatedUser(authenticatedUser));
+    } catch (error) {
+      logoutApi();
+      setUser(null);
+      throw error;
     }
-
-    sessionStorage.setItem(
-      AUTH_STORAGE_KEY,
-      JSON.stringify(authenticatedUser),
-    )
-
-    setUser(authenticatedUser)
-  }
-
-  const logout = () => {
-    sessionStorage.removeItem(AUTH_STORAGE_KEY)
-    setUser(null)
-  }
+  };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: Boolean(user),
+        isAuthenticated: user !== null,
         login,
         logout,
+        refreshUser,
       }}
     >
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext)
+export function useAuth(): AuthContextValue {
+  const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error(
-      'useAuth debe utilizarse dentro de AuthProvider',
-    )
+    throw new Error("useAuth debe utilizarse dentro de AuthProvider");
   }
 
-  return context
+  return context;
 }

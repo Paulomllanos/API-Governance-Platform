@@ -130,3 +130,26 @@
     text-align: center;
   }
 }
+
+
+.login-error {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background-color: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.login-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.login-link:disabled,
+.login-checkbox input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

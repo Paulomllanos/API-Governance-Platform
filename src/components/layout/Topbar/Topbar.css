@@ -180,3 +180,123 @@
     display: none;
   }
 }
+
+
+/* Contenedor del perfil */
+
+.topbar-profile-container {
+  position: relative;
+}
+
+/* Flecha desplegable */
+
+.topbar-chevron {
+  transition: transform 180ms ease;
+}
+
+.topbar-chevron--open {
+  transform: rotate(180deg);
+}
+
+/* Menú del perfil */
+
+.topbar-profile-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+
+  width: 260px;
+  max-width: calc(100vw - 32px);
+
+  padding: 8px;
+
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+
+  z-index: 100;
+}
+
+/* Información del usuario */
+
+.topbar-profile-menu__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 12px;
+
+  color: #334155;
+}
+
+.topbar-profile-menu__header > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.topbar-profile-menu__header strong {
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.topbar-profile-menu__header span {
+  color: #64748b;
+  font-size: 12px;
+
+  overflow-wrap: anywhere;
+}
+
+/* Separador */
+
+.topbar-profile-menu__divider {
+  height: 1px;
+  margin: 4px 0 8px;
+  background: #e2e8f0;
+}
+
+/* Botón de cierre de sesión */
+
+.topbar-profile-menu__logout {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 12px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: transparent;
+  color: #b91c1c;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+
+  text-align: left;
+  cursor: pointer;
+
+  transition: background 160ms ease;
+}
+
+.topbar-profile-menu__logout:hover {
+  background: #fef2f2;
+}
+
+.topbar-profile-menu__logout:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar-chevron,
+  .topbar-profile-menu__logout {
+    transition: none;
+  }
+}
