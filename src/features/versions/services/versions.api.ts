@@ -18,6 +18,7 @@ interface BackendApiVersion {
   status: ApiVersion['status']
   createdAt: string
   updatedAt: string
+  workflowStatus: ApiVersion['workflowStatus'];
 }
 
 function mapBackendVersion(
@@ -31,6 +32,7 @@ function mapBackendVersion(
     status: version.status,
     createdAt: version.createdAt,
     updatedAt: version.updatedAt,
+    workflowStatus: version.workflowStatus,
   }
 }
 

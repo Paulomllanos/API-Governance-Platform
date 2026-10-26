@@ -1,31 +1,33 @@
+import type { ApiVersion, ApiVersionStatus } from "../../types/version.types";
+import "./ApiVersionsTable.css";
 
-import type { ApiVersion, ApiVersionStatus } from '../../types/version.types'
-import './ApiVersionsTable.css'
+import { workflowStatusLabels } from "../../../workflow/types/workflow.types";
 
 interface ApiVersionsTableProps {
-  versions: ApiVersion[]
-  documentCounts: Record<string, number>
-  onUploadDocument: (version: ApiVersion) => void
-  onViewDocuments: (version: ApiVersion) => void
+  versions: ApiVersion[];
+  documentCounts: Record<string, number>;
+  onUploadDocument: (version: ApiVersion) => void;
+  onViewDocuments: (version: ApiVersion) => void;
+  onManageWorkflow: (version: ApiVersion) => void;
 }
 
 const statusLabels: Record<ApiVersionStatus, string> = {
-  DRAFT: 'Borrador',
-  ACTIVE: 'Activa',
-  DEPRECATED: 'Deprecada',
-}
+  DRAFT: "Borrador",
+  ACTIVE: "Activa",
+  DEPRECATED: "Deprecada",
+};
 
 function compareVersions(a: ApiVersion, b: ApiVersion) {
-  const aParts = a.version.split('.').map(Number)
-  const bParts = b.version.split('.').map(Number)
+  const aParts = a.version.split(".").map(Number);
+  const bParts = b.version.split(".").map(Number);
 
   for (let index = 0; index < 3; index++) {
-    const difference = bParts[index] - aParts[index]
+    const difference = bParts[index] - aParts[index];
 
-    if (difference !== 0) return difference
+    if (difference !== 0) return difference;
   }
 
-  return 0
+  return 0;
 }
 
 export function ApiVersionsTable({
@@ -33,19 +35,20 @@ export function ApiVersionsTable({
   onUploadDocument,
   documentCounts,
   onViewDocuments,
+  onManageWorkflow,
 }: ApiVersionsTableProps) {
-  const sortedVersions = [...versions].sort(compareVersions)
+  const sortedVersions = [...versions].sort(compareVersions);
 
   if (sortedVersions.length === 0) {
     return (
       <div className="api-versions__empty">
         <strong>No hay versiones registradas</strong>
         <p>
-          Registra la primera versión para comenzar a
-          administrar los contratos de esta API.
+          Registra la primera versión para comenzar a administrar los contratos
+          de esta API.
         </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -56,6 +59,7 @@ export function ApiVersionsTable({
             <th>Versión</th>
             <th>Descripción</th>
             <th>Estado</th>
+            <th>Workflow</th>
             <th>OpenAPI</th>
             <th>Actualización</th>
             <th>Acciones</th>
@@ -76,6 +80,17 @@ export function ApiVersionsTable({
                   className={`api-versions__status api-versions__status--${version.status.toLowerCase()}`}
                 >
                   {statusLabels[version.status]}
+                </span>
+              </td>
+
+              <td>
+                <span
+                  className={
+                    `api-versions__workflow-status ` +
+                    `api-versions__workflow-status--${version.workflowStatus.toLowerCase()}`
+                  }
+                >
+                  {workflowStatusLabels[version.workflowStatus]}
                 </span>
               </td>
 
@@ -107,8 +122,21 @@ export function ApiVersionsTable({
                     type="button"
                     className="api-versions__upload-button"
                     onClick={() => onUploadDocument(version)}
+                    disabled={
+                      !["DRAFT", "OBSERVED", "CORRECTED"].includes(
+                        version.workflowStatus,
+                      )
+                    }
                   >
                     Cargar OpenAPI
+                  </button>
+
+                  <button
+                    type="button"
+                    className="api-versions__workflow-button"
+                    onClick={() => onManageWorkflow(version)}
+                  >
+                    Gestionar workflow
                   </button>
                 </div>
               </td>

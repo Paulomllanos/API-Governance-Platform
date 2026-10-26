@@ -1,3 +1,8 @@
+import type {
+  WorkflowStatus,
+} from '../../workflow/types/workflow.types';
+
+
 export type ApiVersionStatus =
   | 'DRAFT'
   | 'ACTIVE'
@@ -11,6 +16,7 @@ export interface ApiVersion {
   status: ApiVersionStatus
   createdAt: string
   updatedAt: string
+  workflowStatus: WorkflowStatus;
 }
 
 export interface CreateApiVersionData {

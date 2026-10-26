@@ -23,6 +23,7 @@ import type { ApiLifecycleStatus } from "../types/api.types";
 
 import "./ApiDetailPage.css";
 
+import { WorkflowModal } from "../../workflow/components/WorkflowModal/WorkflowModal";
 
 const statusLabels: Record<ApiLifecycleStatus, string> = {
   ACTIVE: "Activa",
@@ -76,6 +77,10 @@ export function ApiDetailPage() {
       return counts;
     },
     {},
+  );
+
+  const [workflowVersion, setWorkflowVersion] = useState<ApiVersion | null>(
+    null,
   );
 
   useEffect(() => {
@@ -260,6 +265,7 @@ export function ApiDetailPage() {
             onUploadDocument={setSelectedVersion}
             documentCounts={documentCounts}
             onViewDocuments={setViewingVersion}
+            onManageWorkflow={setWorkflowVersion}
           />
         )}
       </Card>
@@ -292,6 +298,16 @@ export function ApiDetailPage() {
             requestEvaluation({ documentId })
           }
           onClose={() => setViewingVersion(null)}
+        />
+      )}
+
+      {workflowVersion && apiId && (
+        <WorkflowModal
+          version={workflowVersion}
+          onClose={() => setWorkflowVersion(null)}
+          onUpdated={async () => {
+            await loadVersionsByApiId(apiId);
+          }}
         />
       )}
     </div>

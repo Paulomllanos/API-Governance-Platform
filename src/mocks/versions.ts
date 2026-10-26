@@ -1,5 +1,7 @@
 
-import type { ApiVersion } from '../features/versions/types/version.types'
+import type {
+  ApiVersion,
+} from '../features/versions/types/version.types';
 
 export const mockVersions: ApiVersion[] = [
   {
@@ -8,6 +10,7 @@ export const mockVersions: ApiVersion[] = [
     version: '1.0.0',
     description: 'Versión inicial de la API.',
     status: 'DEPRECATED',
+    workflowStatus: 'PUBLISHED',
     createdAt: '2026-07-10',
     updatedAt: '2026-07-10',
   },
@@ -17,6 +20,7 @@ export const mockVersions: ApiVersion[] = [
     version: '1.1.0',
     description: 'Incorporación de nuevos recursos de clientes.',
     status: 'DEPRECATED',
+    workflowStatus: 'PUBLISHED',
     createdAt: '2026-08-15',
     updatedAt: '2026-08-15',
   },
@@ -26,7 +30,8 @@ export const mockVersions: ApiVersion[] = [
     version: '1.2.0',
     description: 'Mejoras de documentación y seguridad.',
     status: 'ACTIVE',
+    workflowStatus: 'PUBLISHED',
     createdAt: '2026-09-22',
     updatedAt: '2026-10-08',
   },
-]
+];
