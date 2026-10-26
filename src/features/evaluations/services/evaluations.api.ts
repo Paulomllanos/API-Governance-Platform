@@ -1,5 +1,7 @@
+import {
+  httpRequest,
+} from '../../../shared/services/http-client';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 export type EvaluationStatus =
     | 'PENDING'
@@ -100,31 +102,10 @@ async function request<T>(
     endpoint: string,
     options: RequestInit = {},
 ): Promise<T> {
-    if (!API_BASE_URL) {
-        throw new Error(
-            'No se ha configurado VITE_API_BASE_URL.',
-        )
-    }
-
-    const response = await fetch(
-        `${API_BASE_URL}${endpoint}`,
-        {
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-            },
-        },
-    )
-
-    if (!response.ok) {
-        throw new Error(
-            `Error HTTP ${response.status}: ${response.statusText}`,
-        )
-    }
-
-    return response.json() as Promise<T>
+    return httpRequest<T>(endpoint, options);
 }
+
+
 
 // Registrar una evaluación en estado PENDING.
 export async function createEvaluationRequest(

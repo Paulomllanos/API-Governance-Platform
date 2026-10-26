@@ -1,23 +1,29 @@
+
 import {
   createContext,
   useContext,
-  useState,
   useEffect,
+  useState,
   type ReactNode,
-} from "react";
-
-import { subscribeToSessionCleared } from "../services/auth-token";
+} from 'react';
 
 import {
   login as loginApi,
   logout as logoutApi,
+  clearLocalSession,
+  refreshSession,
   fetchAuthenticatedUser,
-} from "../services/auth.api";
+} from '../services/auth.api';
 
-import type { AppRole, AuthenticatedUser } from "../types/auth.types";
+import {
+  subscribeToSessionCleared,
+} from '../services/auth-token';
 
-// Mantiene compatibilidad con componentes existentes
-// que utilizan user.name y user.role.
+import type {
+  AppRole,
+  AuthenticatedUser,
+} from '../types/auth.types';
+
 export interface User {
   id: string;
   name: string;
@@ -29,78 +35,127 @@ export interface User {
 interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
+  isInitializing: boolean;
 
-  login: (email: string, password: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string,
+  ) => Promise<void>;
 
-  logout: () => void;
-
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const AuthContext = createContext<
+  AuthContextValue | undefined
+>(undefined);
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 const ROLE_LABELS: Record<AppRole, string> = {
-  ADMIN: "Administrador",
-  REVIEWER: "Revisor",
-  DEVELOPER: "Desarrollador",
+  ADMIN: 'Administrador',
+  REVIEWER: 'Revisor',
+  DEVELOPER: 'Desarrollador',
 };
 
-function mapAuthenticatedUser(authenticatedUser: AuthenticatedUser): User {
+function mapAuthenticatedUser(
+  authenticatedUser: AuthenticatedUser,
+): User {
   const primaryRole = authenticatedUser.roles[0];
 
   return {
     id: authenticatedUser.id,
     name: authenticatedUser.displayName,
     email: authenticatedUser.email,
-    role: primaryRole ? ROLE_LABELS[primaryRole] : "Sin rol asignado",
+    role: primaryRole
+      ? ROLE_LABELS[primaryRole]
+      : 'Sin rol asignado',
     roles: authenticatedUser.roles,
   };
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
-  // La sesión comienza sin autenticar.
-  // No recuperamos usuarios simulados de sessionStorage.
+export function AuthProvider({
+  children,
+}: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
 
+  const [isInitializing, setIsInitializing] =
+    useState(true);
+
+  // Sincroniza el estado de React cuando
+  // un servicio HTTP invalida el access token.
   useEffect(() => {
     return subscribeToSessionCleared(() => {
       setUser(null);
     });
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
-    // Invalidar primero cualquier sesión anterior.
-    logoutApi();
+  // Intenta recuperar la sesión al iniciar React.
+  useEffect(() => {
+    let active = true;
+
+    void refreshSession()
+      .then((response) => {
+        if (active) {
+          setUser(
+            mapAuthenticatedUser(response.user),
+          );
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setUser(null);
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setIsInitializing(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const login = async (
+    email: string,
+    password: string,
+  ): Promise<void> => {
+    clearLocalSession();
     setUser(null);
 
-    // NestJS verifica las credenciales y devuelve el JWT.
     const response = await loginApi({
       email: email.trim(),
       password,
     });
 
-    // auth.api.ts ya guarda el token en memoria.
-    // Aquí conservamos los datos del usuario.
-    setUser(mapAuthenticatedUser(response.user));
+    setUser(
+      mapAuthenticatedUser(response.user),
+    );
   };
 
-  const logout = (): void => {
-    logoutApi();
+  const logout = async (): Promise<void> => {
+    // Invalidamos inmediatamente la sesión visual.
+    clearLocalSession();
     setUser(null);
+
+    // El servidor revoca la sesión y elimina la cookie.
+    await logoutApi();
   };
 
   const refreshUser = async (): Promise<void> => {
     try {
-      // Consulta GET /auth/me con el JWT vigente.
-      const authenticatedUser = await fetchAuthenticatedUser();
+      const authenticatedUser =
+        await fetchAuthenticatedUser();
 
-      setUser(mapAuthenticatedUser(authenticatedUser));
+      setUser(
+        mapAuthenticatedUser(authenticatedUser),
+      );
     } catch (error) {
-      logoutApi();
+      clearLocalSession();
       setUser(null);
       throw error;
     }
@@ -111,6 +166,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       value={{
         user,
         isAuthenticated: user !== null,
+        isInitializing,
         login,
         logout,
         refreshUser,
@@ -125,8 +181,11 @@ export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error("useAuth debe utilizarse dentro de AuthProvider");
+    throw new Error(
+      'useAuth debe utilizarse dentro de AuthProvider',
+    );
   }
 
   return context;
 }
+

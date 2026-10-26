@@ -1,18 +1,11 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Bell, ChevronDown, Search, LogOut, UserRound } from "lucide-react";
 
-import {
-  Bell,
-  ChevronDown,
-  Search,
-  LogOut,
-  UserRound,
-} from 'lucide-react';
+import { useAuth } from "../../../features/auth/context/AuthContext";
 
-import { useAuth } from '../../../features/auth/context/AuthContext';
-
-import './Topbar.css';
+import "./Topbar.css";
 
 export function Topbar() {
   const navigate = useNavigate();
@@ -21,24 +14,32 @@ export function Topbar() {
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const displayName = user?.name ?? 'Usuario';
-  const displayRole = user?.role ?? 'Sin rol';
+  const displayName = user?.name ?? "Usuario";
+  const displayRole = user?.role ?? "Sin rol";
 
-  const initials = displayName
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join('') || 'U';
+  const initials =
+    displayName
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("") || "U";
 
-  function handleLogout() {
+  async function handleLogout(): Promise<void> {
     setIsProfileOpen(false);
 
-    logout();
-
-    navigate('/login', {
-      replace: true,
-    });
+    try {
+      await logout();
+    } catch (error) {
+      console.error(
+        "No se pudo confirmar el cierre de sesión en el servidor.",
+        error,
+      );
+    } finally {
+      navigate("/login", {
+        replace: true,
+      });
+    }
   }
 
   return (
@@ -66,7 +67,7 @@ export function Topbar() {
         <div
           className="topbar-profile-container"
           onKeyDown={(event) => {
-            if (event.key === 'Escape') {
+            if (event.key === "Escape") {
               setIsProfileOpen(false);
             }
           }}
@@ -81,9 +82,7 @@ export function Topbar() {
               setIsProfileOpen((previous) => !previous);
             }}
           >
-            <div className="topbar-avatar">
-              {initials}
-            </div>
+            <div className="topbar-avatar">{initials}</div>
 
             <div className="topbar-user">
               <strong>{displayName}</strong>
@@ -94,23 +93,20 @@ export function Topbar() {
               size={15}
               className={
                 isProfileOpen
-                  ? 'topbar-chevron topbar-chevron--open'
-                  : 'topbar-chevron'
+                  ? "topbar-chevron topbar-chevron--open"
+                  : "topbar-chevron"
               }
             />
           </button>
 
           {isProfileOpen && (
-            <div
-              id="topbar-profile-menu"
-              className="topbar-profile-menu"
-            >
+            <div id="topbar-profile-menu" className="topbar-profile-menu">
               <div className="topbar-profile-menu__header">
                 <UserRound size={17} />
 
                 <div>
                   <strong>{displayName}</strong>
-                  <span>{user?.email ?? ''}</span>
+                  <span>{user?.email ?? ""}</span>
                 </div>
               </div>
 
@@ -119,7 +115,9 @@ export function Topbar() {
               <button
                 type="button"
                 className="topbar-profile-menu__logout"
-                onClick={handleLogout}
+                onClick={() => {
+                  void handleLogout();
+                }}
               >
                 <LogOut size={17} />
                 <span>Cerrar sesión</span>
