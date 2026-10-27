@@ -1,33 +1,26 @@
+import { useEffect, useState, type FormEvent } from "react";
 
-import {
-  useEffect,
-  useState,
-  type FormEvent,
-} from 'react';
+import { History, X } from "lucide-react";
 
-import { History, X } from 'lucide-react';
+import { useAuth } from "../../../auth/context/AuthContext";
 
-import { useAuth } from '../../../auth/context/AuthContext';
-
-import type {
-  ApiVersion,
-} from '../../../versions/types/version.types';
+import type { ApiVersion } from "../../../versions/types/version.types";
 
 import type {
   WorkflowHistory,
   WorkflowStatus,
-} from '../../types/workflow.types';
+} from "../../types/workflow.types";
 
-import {
-  workflowStatusLabels,
-} from '../../types/workflow.types';
+import { workflowStatusLabels } from "../../types/workflow.types";
 
 import {
   changeWorkflowStatusRequest,
   fetchWorkflowHistory,
-} from '../../services/workflow.api';
+} from "../../services/workflow.api";
 
-import './WorkflowModal.css';
+import "./WorkflowModal.css";
+
+import { Link } from "react-router-dom";
 
 interface WorkflowModalProps {
   version: ApiVersion;
@@ -42,53 +35,50 @@ interface WorkflowAction {
   requiresComment: boolean;
 }
 
-const ACTIONS: Record<
-  WorkflowStatus,
-  WorkflowAction[]
-> = {
+const ACTIONS: Record<WorkflowStatus, WorkflowAction[]> = {
   DRAFT: [
     {
-      toStatus: 'IN_REVIEW',
-      label: 'Solicitar revisión',
-      roles: ['ADMIN', 'DEVELOPER'],
+      toStatus: "IN_REVIEW",
+      label: "Solicitar revisión",
+      roles: ["ADMIN", "DEVELOPER"],
       requiresComment: false,
     },
   ],
   IN_REVIEW: [
     {
-      toStatus: 'OBSERVED',
-      label: 'Registrar observaciones',
-      roles: ['ADMIN', 'REVIEWER'],
+      toStatus: "OBSERVED",
+      label: "Registrar observaciones",
+      roles: ["ADMIN", "REVIEWER"],
       requiresComment: true,
     },
     {
-      toStatus: 'APPROVED',
-      label: 'Aprobar versión',
-      roles: ['ADMIN', 'REVIEWER'],
+      toStatus: "APPROVED",
+      label: "Aprobar versión",
+      roles: ["ADMIN", "REVIEWER"],
       requiresComment: false,
     },
   ],
   OBSERVED: [
     {
-      toStatus: 'CORRECTED',
-      label: 'Registrar correcciones',
-      roles: ['ADMIN', 'DEVELOPER'],
+      toStatus: "CORRECTED",
+      label: "Registrar correcciones",
+      roles: ["ADMIN", "DEVELOPER"],
       requiresComment: true,
     },
   ],
   CORRECTED: [
     {
-      toStatus: 'IN_REVIEW',
-      label: 'Reenviar a revisión',
-      roles: ['ADMIN', 'DEVELOPER'],
+      toStatus: "IN_REVIEW",
+      label: "Reenviar a revisión",
+      roles: ["ADMIN", "DEVELOPER"],
       requiresComment: false,
     },
   ],
   APPROVED: [
     {
-      toStatus: 'PUBLISHED',
-      label: 'Publicar versión',
-      roles: ['ADMIN'],
+      toStatus: "PUBLISHED",
+      label: "Publicar versión",
+      roles: ["ADMIN"],
       requiresComment: false,
     },
   ],
@@ -102,20 +92,19 @@ export function WorkflowModal({
 }: WorkflowModalProps) {
   const { user } = useAuth();
 
-  const [history, setHistory] =
-    useState<WorkflowHistory | null>(null);
+  const [history, setHistory] = useState<WorkflowHistory | null>(null);
 
-  const [currentStatus, setCurrentStatus] =
-    useState<WorkflowStatus>(version.workflowStatus);
+  const [currentStatus, setCurrentStatus] = useState<WorkflowStatus>(
+    version.workflowStatus,
+  );
 
-  const [selectedStatus, setSelectedStatus] =
-    useState<WorkflowStatus | ''>('');
+  const [selectedStatus, setSelectedStatus] = useState<WorkflowStatus | "">("");
 
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [historyError, setHistoryError] = useState('');
+  const [error, setError] = useState("");
+  const [historyError, setHistoryError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -128,9 +117,7 @@ export function WorkflowModal({
       })
       .catch(() => {
         if (active) {
-          setHistoryError(
-            'No fue posible cargar el historial del workflow.',
-          );
+          setHistoryError("No fue posible cargar el historial del workflow.");
         }
       })
       .finally(() => {
@@ -146,48 +133,41 @@ export function WorkflowModal({
 
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !isSubmitting) {
+      if (event.key === "Escape" && !isSubmitting) {
         onClose();
       }
     }
 
-    document.addEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
 
     return () => {
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [isSubmitting, onClose]);
 
   const availableActions = ACTIONS[currentStatus].filter(
     (action) =>
-      user?.roles.some((role) =>
-        action.roles.includes(role),
-      ) ?? false,
+      user?.roles.some((role) => action.roles.includes(role)) ?? false,
   );
 
   const selectedAction = availableActions.find(
     (action) => action.toStatus === selectedStatus,
   );
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!selectedAction || isSubmitting || isLoading) {
       return;
     }
 
-    if (
-      selectedAction.requiresComment &&
-      !comment.trim()
-    ) {
-      setError('Debes ingresar un comentario.');
+    if (selectedAction.requiresComment && !comment.trim()) {
+      setError("Debes ingresar un comentario.");
       return;
     }
 
     setIsSubmitting(true);
-    setError('');
+    setError("");
 
     try {
       await changeWorkflowStatusRequest({
@@ -205,16 +185,16 @@ export function WorkflowModal({
 
       setHistory(updatedHistory);
       setCurrentStatus(updatedHistory.currentStatus);
-      setSelectedStatus('');
-      setComment('');
-      setHistoryError('');
+      setSelectedStatus("");
+      setComment("");
+      setHistoryError("");
 
       await onUpdated();
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
-          : 'No fue posible cambiar el estado.',
+          : "No fue posible cambiar el estado.",
       );
     } finally {
       setIsSubmitting(false);
@@ -231,9 +211,7 @@ export function WorkflowModal({
       >
         <header className="workflow-modal__header">
           <div>
-            <h2 id="workflow-modal-title">
-              Gestión del workflow
-            </h2>
+            <h2 id="workflow-modal-title">Gestión del workflow</h2>
             <p>Versión v{version.version}</p>
           </div>
 
@@ -251,15 +229,11 @@ export function WorkflowModal({
         <div className="workflow-modal__body">
           <div className="workflow-modal__current">
             <span>Estado actual</span>
-            <strong>
-              {workflowStatusLabels[currentStatus]}
-            </strong>
+            <strong>{workflowStatusLabels[currentStatus]}</strong>
           </div>
 
           {isLoading ? (
-            <p role="status">
-              Consultando workflow...
-            </p>
+            <p role="status">Consultando workflow...</p>
           ) : (
             <>
               <section className="workflow-modal__section">
@@ -267,36 +241,28 @@ export function WorkflowModal({
 
                 {availableActions.length === 0 ? (
                   <p className="workflow-modal__muted">
-                    No tienes acciones disponibles para
-                    este estado.
+                    No tienes acciones disponibles para este estado.
                   </p>
                 ) : (
                   <form onSubmit={(event) => void handleSubmit(event)}>
-                    <label htmlFor="workflow-action">
-                      Acción
-                    </label>
+                    <label htmlFor="workflow-action">Acción</label>
 
                     <select
                       id="workflow-action"
                       value={selectedStatus}
                       onChange={(event) => {
                         setSelectedStatus(
-                          event.target.value as WorkflowStatus | '',
+                          event.target.value as WorkflowStatus | "",
                         );
-                        setError('');
+                        setError("");
                       }}
                       disabled={isSubmitting}
                       required
                     >
-                      <option value="">
-                        Selecciona una acción
-                      </option>
+                      <option value="">Selecciona una acción</option>
 
                       {availableActions.map((action) => (
-                        <option
-                          key={action.toStatus}
-                          value={action.toStatus}
-                        >
+                        <option key={action.toStatus} value={action.toStatus}>
                           {action.label}
                         </option>
                       ))}
@@ -307,22 +273,18 @@ export function WorkflowModal({
                         <label htmlFor="workflow-comment">
                           Comentario
                           {selectedAction.requiresComment
-                            ? ' *'
-                            : ' (opcional)'}
+                            ? " *"
+                            : " (opcional)"}
                         </label>
 
                         <textarea
                           id="workflow-comment"
                           rows={4}
                           maxLength={2000}
-                          required={
-                            selectedAction.requiresComment
-                          }
+                          required={selectedAction.requiresComment}
                           disabled={isSubmitting}
                           value={comment}
-                          onChange={(event) =>
-                            setComment(event.target.value)
-                          }
+                          onChange={(event) => setComment(event.target.value)}
                           placeholder="Describe el motivo de la transición..."
                         />
 
@@ -331,9 +293,7 @@ export function WorkflowModal({
                           className="workflow-modal__submit"
                           disabled={isSubmitting}
                         >
-                          {isSubmitting
-                            ? 'Guardando...'
-                            : selectedAction.label}
+                          {isSubmitting ? "Guardando..." : selectedAction.label}
                         </button>
                       </>
                     )}
@@ -341,10 +301,7 @@ export function WorkflowModal({
                 )}
 
                 {error && (
-                  <p
-                    role="alert"
-                    className="workflow-modal__error"
-                  >
+                  <p role="alert" className="workflow-modal__error">
                     {error}
                   </p>
                 )}
@@ -362,32 +319,94 @@ export function WorkflowModal({
                   </p>
                 )}
 
-                {!historyError &&
-                  history?.transitions.length === 0 && (
-                    <p className="workflow-modal__muted">
-                      Todavía no se han registrado
-                      transiciones para esta versión.
-                    </p>
-                  )}
+                {!historyError && history?.transitions.length === 0 && (
+                  <p className="workflow-modal__muted">
+                    Todavía no se han registrado transiciones para esta versión.
+                  </p>
+                )}
 
                 <ol className="workflow-modal__history">
                   {history?.transitions.map((item) => (
                     <li key={item.id}>
                       <strong>
                         {workflowStatusLabels[item.fromStatus]}
-                        {' → '}
+                        {" → "}
                         {workflowStatusLabels[item.toStatus]}
                       </strong>
 
                       <span>
                         {item.performedBy.displayName}
-                        {' · '}
-                        {new Date(item.createdAt)
-                          .toLocaleString('es-CL')}
+                        {" · "}
+                        {new Date(item.createdAt).toLocaleString("es-CL")}
                       </span>
 
-                      {item.comment && (
-                        <p>{item.comment}</p>
+                      {item.comment && <p>{item.comment}</p>}
+
+                      {item.toStatus === "APPROVED" && (
+                        <div className="workflow-modal__evidence">
+                          <div className="workflow-modal__evidence-header">
+                            <strong>Evidencia de aprobación</strong>
+                          </div>
+
+                          {item.evaluationId !== null &&
+                          item.evaluationId !== undefined &&
+                          item.evaluationScore !== null &&
+                          item.evaluationScore !== undefined ? (
+                            <>
+                              <div className="workflow-modal__evidence-metrics">
+                                <div>
+                                  <span>Quality Score</span>
+                                  <strong>
+                                    {item.evaluationScore.toLocaleString(
+                                      "es-CL",
+                                      {
+                                        maximumFractionDigits: 2,
+                                      },
+                                    )}
+                                  </strong>
+                                </div>
+
+                                <div>
+                                  <span>Reglas evaluadas</span>
+                                  <strong>
+                                    {item.evaluatedRules ?? "—"} / 18
+                                  </strong>
+                                </div>
+
+                                <div>
+                                  <span>Hallazgos bloqueantes</span>
+                                  <strong>
+                                    {item.evaluationHasBlockingIssues === false
+                                      ? "No"
+                                      : item.evaluationHasBlockingIssues ===
+                                          true
+                                        ? "Sí"
+                                        : "Sin información"}
+                                  </strong>
+                                </div>
+                              </div>
+
+                              <div className="workflow-modal__evidence-document">
+                                <span>Documento evaluado</span>
+                                <code>
+                                  {item.evaluatedDocumentId ?? "No disponible"}
+                                </code>
+                              </div>
+
+                              <Link
+                                className="workflow-modal__evidence-link"
+                                to={`/app/evaluations/${encodeURIComponent(item.evaluationId)}`}
+                              >
+                                Ver evaluación completa
+                              </Link>
+                            </>
+                          ) : (
+                            <p className="workflow-modal__muted">
+                              Esta aprobación no tiene evidencia histórica
+                              vinculada.
+                            </p>
+                          )}
+                        </div>
                       )}
                     </li>
                   ))}
@@ -398,11 +417,7 @@ export function WorkflowModal({
         </div>
 
         <footer className="workflow-modal__footer">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isSubmitting}
-          >
+          <button type="button" onClick={onClose} disabled={isSubmitting}>
             Cerrar
           </button>
         </footer>

@@ -30,6 +30,13 @@ export interface WorkflowTransition {
     displayName: string;
     email: string;
   };
+  
+  evaluationId: string | null;
+  evaluatedDocumentId: string | null;
+  evaluationScore: number | null;
+  evaluatedRules: number | null;
+  evaluationHasBlockingIssues: boolean | null;
+
 }
 
 export interface WorkflowHistory {
