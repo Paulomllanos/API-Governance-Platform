@@ -1,64 +1,40 @@
+import { createBrowserRouter, Navigate } from "react-router-dom";
 
-import {
-  createBrowserRouter,
-  Navigate,
-} from 'react-router-dom';
+import { ProtectedRoute } from "../features/auth/components/ProtectedRoute";
 
-import {
-  ProtectedRoute,
-} from '../features/auth/components/ProtectedRoute';
+import { LoginPage } from "../features/auth/pages/LoginPage";
 
-import {
-  LoginPage,
-} from '../features/auth/pages/LoginPage';
+import { ForbiddenPage } from "../features/auth/pages/ForbiddenPage";
 
-import {
-  ForbiddenPage,
-} from '../features/auth/pages/ForbiddenPage';
+import { AppLayout } from "../components/layout/AppLayout/AppLayout";
 
-import {
-  AppLayout,
-} from '../components/layout/AppLayout/AppLayout';
+import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
 
-import {
-  DashboardPage,
-} from '../features/dashboard/pages/DashboardPage';
+import { ApisPage } from "../features/apis/pages/ApisPage";
 
-import {
-  ApisPage,
-} from '../features/apis/pages/ApisPage';
+import { ApiProvider } from "../features/apis/context/ApiProvider";
 
-import {
-  ApiProvider,
-} from '../features/apis/context/ApiProvider';
+import { ApiDetailPage } from "../features/apis/pages/ApiDetailPage";
 
-import {
-  ApiDetailPage,
-} from '../features/apis/pages/ApiDetailPage';
+import { RulesPage } from "../features/rules/pages/RulesPage";
 
-import {
-  RulesPage,
-} from '../features/rules/pages/RulesPage';
+import { EvaluationsPage } from "../features/evaluations/pages/EvaluationsPage";
 
-import {
-  EvaluationsPage,
-} from '../features/evaluations/pages/EvaluationsPage';
+import { EvaluationDetailPage } from "../features/evaluations/pages/EvaluationDetailPage";
 
-import {
-  EvaluationDetailPage,
-} from '../features/evaluations/pages/EvaluationDetailPage';
+import { FindingsPage } from "../features/findings/pages/FindingsPage";
 
 export const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <Navigate to="/login" replace />,
   },
   {
-    path: '/login',
+    path: "/login",
     element: <LoginPage />,
   },
   {
-    path: '/app',
+    path: "/app",
     element: (
       <ProtectedRoute>
         <ApiProvider>
@@ -72,34 +48,38 @@ export const router = createBrowserRouter([
         element: <Navigate to="dashboard" replace />,
       },
       {
-        path: 'dashboard',
+        path: "dashboard",
         element: <DashboardPage />,
       },
       {
-        path: 'apis',
+        path: "apis",
         element: <ApisPage />,
       },
       {
-        path: 'apis/:apiId',
+        path: "apis/:apiId",
         element: <ApiDetailPage />,
       },
       {
-        path: 'rules',
+        path: "rules",
         element: <RulesPage />,
       },
       {
-        path: 'evaluations',
+        path: "evaluations",
         element: <EvaluationsPage />,
       },
       {
-        path: 'evaluations/:evaluationId',
+        path: "evaluations/:evaluationId",
         element: <EvaluationDetailPage />,
+      },
+      {
+        path: "findings",
+        element: <FindingsPage />,
       },
 
       // Acceso denegado para usuarios autenticados
       // que no tienen permisos suficientes.
       {
-        path: 'forbidden',
+        path: "forbidden",
         element: <ForbiddenPage />,
       },
     ],
