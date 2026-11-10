@@ -1,153 +1,91 @@
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { AlertTriangle, Search, RefreshCw } from "lucide-react";
 
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { AlertTriangle, Search, RefreshCw } from 'lucide-react';
+import { Card } from "../../../components/ui/Card/Card";
 
-import { Card } from '../../../components/ui/Card/Card';
+import { fetchFindings } from "../services/findings.api";
 
-import {
-  fetchEvaluations,
-  fetchEvaluationById,
-  type BackendEvaluation,
-  type BackendRuleResult,
-} from '../../evaluations/services/evaluations.api';
+import type {
+  Finding,
+  FindingSeverity,
+  FindingState,
+  FindingStatus,
+  FindingsSummary,
+} from "../types/finding.types";
 
-import './FindingsPage.css';
+import { findingStateLabels } from "../types/finding.types";
 
-type FindingStatus = 'FAIL' | 'WARNING';
-type Severity = NonNullable<BackendRuleResult['severity']>;
-type SeverityFilter = Severity | 'ALL';
-type StatusFilter = FindingStatus | 'ALL';
+import "./FindingsPage.css";
 
-interface FindingRow {
-  id: string;
-  evaluationId: string;
-  apiName: string;
-  apiVersion: string;
-  documentName: string;
-  ruleId: string;
-  ruleName: string;
-  category: string;
-  severity: Severity | null;
-  status: FindingStatus;
-  message: string;
-  evidence: string | null;
-  recommendation: string | null;
-  evaluatedAt: string;
-}
+type SeverityFilter = FindingSeverity | "ALL";
+type StatusFilter = FindingStatus | "ALL";
+type StateFilter = FindingState | "ALL";
 
-const severityOrder: Record<Severity, number> = {
+const severityOrder: Record<FindingSeverity, number> = {
   CRITICAL: 4,
   HIGH: 3,
   MEDIUM: 2,
   LOW: 1,
 };
 
-const severityLabels: Record<Severity, string> = {
-  CRITICAL: 'Crítica',
-  HIGH: 'Alta',
-  MEDIUM: 'Media',
-  LOW: 'Baja',
+const severityLabels: Record<FindingSeverity, string> = {
+  CRITICAL: "Crítica",
+  HIGH: "Alta",
+  MEDIUM: "Media",
+  LOW: "Baja",
 };
 
 const categoryLabels: Record<string, string> = {
-  DESIGN: 'Diseño',
-  DOCUMENTATION: 'Documentación',
-  SECURITY: 'Seguridad',
-  VERSIONING: 'Versionamiento',
-  OBSERVABILITY: 'Observabilidad',
-  GOVERNANCE: 'Gobierno',
+  DESIGN: "Diseño",
+  DOCUMENTATION: "Documentación",
+  SECURITY: "Seguridad",
+  VERSIONING: "Versionamiento",
+  OBSERVABILITY: "Observabilidad",
+  GOVERNANCE: "Gobierno",
 };
 
-async function loadFindings(): Promise<FindingRow[]> {
-  const evaluations = await fetchEvaluations();
-
-  // La primera evaluación de cada documento será
-  // la más reciente, según la fecha de solicitud.
-  const ordered = [...evaluations].sort(
-    (a, b) =>
-      new Date(b.requestedAt).getTime() -
-      new Date(a.requestedAt).getTime(),
-  );
-
-  const latestByDocument = new Map<string, BackendEvaluation>();
-
-  for (const evaluation of ordered) {
-    if (!latestByDocument.has(evaluation.documentId)) {
-      latestByDocument.set(evaluation.documentId, evaluation);
-    }
-  }
-
-  // Una evaluación nueva pendiente no debe mostrar
-  // resultados históricos como si fueran vigentes.
-  const completed = [...latestByDocument.values()].filter(
-    (evaluation) => evaluation.status === 'COMPLETED',
-  );
-
-  const details = await Promise.all(
-    completed.map((evaluation) =>
-      fetchEvaluationById(evaluation.id),
-    ),
-  );
-
-  return details.flatMap((evaluation): FindingRow[] => {
-    const document = evaluation.document;
-    const version = document?.apiVersion;
-    const api = version?.api;
-
-    return (evaluation.results ?? [])
-      .filter(
-        (result): result is BackendRuleResult & {
-          status: FindingStatus;
-        } =>
-          result.status === 'FAIL' ||
-          result.status === 'WARNING',
-      )
-      .map((result) => ({
-        id: result.id,
-        evaluationId: evaluation.id,
-        apiName: api?.name ?? 'API no disponible',
-        apiVersion: version?.version ?? '—',
-        documentName: document?.fileName ?? 'Documento no disponible',
-        ruleId: result.ruleId,
-        ruleName: result.ruleName ?? result.ruleId,
-        category: result.category ?? 'UNKNOWN',
-        severity: result.severity,
-        status: result.status,
-        message: result.message,
-        evidence: result.evidence,
-        recommendation: result.recommendation,
-        evaluatedAt:
-          evaluation.completedAt ?? evaluation.requestedAt,
-      }));
-  });
-}
-
 export function FindingsPage() {
-  const [findings, setFindings] = useState<FindingRow[]>([]);
+  const [findings, setFindings] = useState<Finding[]>([]);
+
+  const [summary, setSummary] = useState<FindingsSummary>({
+    total: 0,
+    new: 0,
+    persistent: 0,
+    resolved: 0,
+    pendingEvaluationVersions: 0,
+  });
+
+  const [stateFilter, setStateFilter] = useState<StateFilter>("ALL");
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
-  const [search, setSearch] = useState('');
-  const [severityFilter, setSeverityFilter] =
-    useState<SeverityFilter>('ALL');
-  const [statusFilter, setStatusFilter] =
-    useState<StatusFilter>('ALL');
+  const [search, setSearch] = useState("");
+  const [severityFilter, setSeverityFilter] = useState<SeverityFilter>("ALL");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
 
   useEffect(() => {
     let active = true;
 
-    void loadFindings()
-      .then((data) => {
+    void fetchFindings()
+      .then((response) => {
         if (!active) return;
-        setFindings(data);
+
+        setFindings(response.findings);
+        setSummary(response.summary);
         setError(null);
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (!active) return;
+
+        setFindings([]);
+
         setError(
-          'No fue posible obtener los hallazgos desde NestJS.',
+          error instanceof Error
+            ? error.message
+            : "No fue posible consultar los hallazgos.",
         );
       })
       .finally(() => {
@@ -166,53 +104,51 @@ export function FindingsPage() {
       .filter((finding) => {
         const searchable = [
           finding.apiName,
-          finding.apiVersion,
+          finding.version,
           finding.documentName,
           finding.ruleId,
           finding.ruleName,
           finding.message,
         ]
-          .join(' ')
+          .join(" ")
           .toLowerCase();
-
+        const matchesState =
+          stateFilter === "ALL" || finding.state === stateFilter;
         return (
           searchable.includes(term) &&
-          (severityFilter === 'ALL' ||
-            finding.severity === severityFilter) &&
-          (statusFilter === 'ALL' ||
-            finding.status === statusFilter)
+          (severityFilter === "ALL" || finding.severity === severityFilter) &&
+          (statusFilter === "ALL" || finding.status === statusFilter) &&
+          matchesState
         );
       })
       .sort((a, b) => {
-        const priorityA = a.severity
-          ? severityOrder[a.severity]
-          : 0;
+        const priorityA = a.severity ? severityOrder[a.severity] : 0;
 
-        const priorityB = b.severity
-          ? severityOrder[b.severity]
-          : 0;
+        const priorityB = b.severity ? severityOrder[b.severity] : 0;
 
         return (
           priorityB - priorityA ||
-          new Date(b.evaluatedAt).getTime() -
-            new Date(a.evaluatedAt).getTime()
+          new Date(b.evaluatedAt).getTime() - new Date(a.evaluatedAt).getTime()
         );
       });
-  }, [findings, search, severityFilter, statusFilter]);
+  }, [findings, search, severityFilter, statusFilter, stateFilter]);
 
-  const failures = findings.filter(
-    (finding) => finding.status === 'FAIL',
+  const activeFindings = findings.filter(
+    (finding) => finding.state !== "RESOLVED",
+  );
+
+  const failures = activeFindings.filter(
+    (finding) => finding.status === "FAIL",
   ).length;
 
-  const blocking = findings.filter(
+  const blocking = activeFindings.filter(
     (finding) =>
-      finding.status === 'FAIL' &&
-      (finding.severity === 'HIGH' ||
-        finding.severity === 'CRITICAL'),
+      finding.status === "FAIL" &&
+      (finding.severity === "HIGH" || finding.severity === "CRITICAL"),
   ).length;
 
-  const warnings = findings.filter(
-    (finding) => finding.status === 'WARNING',
+  const warnings = activeFindings.filter(
+    (finding) => finding.status === "WARNING",
   ).length;
 
   return (
@@ -221,8 +157,8 @@ export function FindingsPage() {
         <div>
           <h1>Hallazgos de gobierno</h1>
           <p>
-            Incumplimientos y advertencias detectados
-            durante las evaluaciones OpenAPI.
+            Incumplimientos y advertencias detectados durante las evaluaciones
+            OpenAPI.
           </p>
         </div>
 
@@ -243,27 +179,50 @@ export function FindingsPage() {
 
       <section className="findings-page__metrics">
         <Card className="findings-page__metric">
-          <span>Incumplimientos</span>
+          <span>Nuevos</span>
+          <strong>{summary.new}</strong>
+        </Card>
+
+        <Card className="findings-page__metric">
+          <span>Persistentes</span>
+          <strong>{summary.persistent}</strong>
+        </Card>
+
+        <Card className="findings-page__metric">
+          <span>Corregidos</span>
+          <strong>{summary.resolved}</strong>
+        </Card>
+
+        <Card className="findings-page__metric">
+          <span>Incumplimientos vigentes</span>
           <strong>{failures}</strong>
         </Card>
 
         <Card className="findings-page__metric">
-          <span>Bloqueantes</span>
+          <span>Bloqueantes vigentes</span>
           <strong>{blocking}</strong>
         </Card>
 
         <Card className="findings-page__metric">
-          <span>Advertencias</span>
+          <span>Advertencias vigentes</span>
           <strong>{warnings}</strong>
         </Card>
       </section>
+
+      {!isLoading && !error && summary.pendingEvaluationVersions > 0 && (
+        <p className="findings-page__notice">
+          Hay {summary.pendingEvaluationVersions} versión(es) cuyo documento
+          vigente todavía no dispone de una evaluación completada. Sus hallazgos
+          actuales no se consideran verificados.
+        </p>
+      )}
 
       <Card className="findings-page__content">
         <div className="findings-page__section-heading">
           <h2>Resultados de las reglas</h2>
           <p>
-            Se considera la evaluación más reciente
-            de cada documento, cuando está completada.
+            Se considera la evaluación más reciente de cada documento, cuando
+            está completada.
           </p>
         </div>
 
@@ -282,9 +241,7 @@ export function FindingsPage() {
           <select
             value={severityFilter}
             onChange={(event) =>
-              setSeverityFilter(
-                event.target.value as SeverityFilter,
-              )
+              setSeverityFilter(event.target.value as SeverityFilter)
             }
             aria-label="Filtrar por severidad"
           >
@@ -298,21 +255,31 @@ export function FindingsPage() {
           <select
             value={statusFilter}
             onChange={(event) =>
-              setStatusFilter(
-                event.target.value as StatusFilter,
-              )
+              setStatusFilter(event.target.value as StatusFilter)
             }
             aria-label="Filtrar por resultado"
           >
             <option value="ALL">Todos los resultados</option>
+            <option value="PASS">Cumple</option>
             <option value="FAIL">Incumplimientos</option>
             <option value="WARNING">Advertencias</option>
           </select>
+
+          <select
+            value={stateFilter}
+            onChange={(event) =>
+              setStateFilter(event.target.value as StateFilter)
+            }
+            aria-label="Filtrar por seguimiento"
+          >
+            <option value="ALL">Todos los seguimientos</option>
+            <option value="NEW">Nuevos</option>
+            <option value="PERSISTENT">Persistentes</option>
+            <option value="RESOLVED">Corregidos</option>
+          </select>
         </div>
 
-        {isLoading && (
-          <p role="status">Consultando hallazgos...</p>
-        )}
+        {isLoading && <p role="status">Consultando hallazgos...</p>}
 
         {error && (
           <p role="alert" className="findings-page__error">
@@ -325,8 +292,7 @@ export function FindingsPage() {
             <AlertTriangle size={24} />
             <strong>No se encontraron hallazgos</strong>
             <p>
-              No existen resultados que coincidan
-              con los filtros seleccionados.
+              No existen resultados que coincidan con los filtros seleccionados.
             </p>
           </div>
         )}
@@ -344,8 +310,8 @@ export function FindingsPage() {
                       {finding.ruleId} — {finding.ruleName}
                     </strong>
                     <small>
-                      {finding.apiName} · v{finding.apiVersion}
-                      {' · '}
+                      {finding.apiName} · v{finding.version}
+                      {" · "}
                       {finding.documentName}
                     </small>
                   </div>
@@ -354,26 +320,43 @@ export function FindingsPage() {
                     className={
                       `findings-page__severity ` +
                       `findings-page__severity--${
-                        finding.severity?.toLowerCase() ?? 'unknown'
+                        finding.severity?.toLowerCase() ?? "unknown"
                       }`
                     }
                   >
                     {finding.severity
                       ? severityLabels[finding.severity]
-                      : 'Sin severidad'}
+                      : "Sin severidad"}
                   </span>
                 </div>
 
                 <div className="findings-page__metadata">
                   <span>
-                    {categoryLabels[finding.category] ??
-                      finding.category}
+                    {finding.category
+                      ? (categoryLabels[finding.category] ?? finding.category)
+                      : "Sin categoría"}
                   </span>
                   <span>{finding.status}</span>
                   <span>
-                    {new Date(finding.evaluatedAt)
-                      .toLocaleDateString('es-CL')}
+                    {new Date(finding.evaluatedAt).toLocaleDateString("es-CL")}
                   </span>
+
+                  <span
+                    className={
+                      `findings-page__state ` +
+                      `findings-page__state--${finding.state.toLowerCase()}`
+                    }
+                  >
+                    {findingStateLabels[finding.state]}
+                  </span>
+
+                  {finding.previousStatus && (
+                    <span>
+                      Antes: {finding.previousStatus}
+                      {" → "}
+                      Ahora: {finding.status}
+                    </span>
+                  )}
                 </div>
 
                 <p>{finding.message}</p>
