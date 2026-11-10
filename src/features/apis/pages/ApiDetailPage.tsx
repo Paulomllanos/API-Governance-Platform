@@ -306,7 +306,7 @@ export function ApiDetailPage() {
           version={workflowVersion}
           onClose={() => setWorkflowVersion(null)}
           onUpdated={async () => {
-            await loadVersionsByApiId(apiId);
+            await Promise.all([loadVersionsByApiId(apiId), refreshApis()]);
           }}
         />
       )}

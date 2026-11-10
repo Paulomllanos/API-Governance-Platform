@@ -1,0 +1,335 @@
+
+.review-page {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.review-page__header,
+.review-page__catalog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.review-page__header {
+  margin-bottom: 24px;
+}
+
+.review-page__header h1 {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.review-page__header p,
+.review-page__catalog-header p {
+  margin-top: 7px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.review-page__refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.review-page__refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.review-page__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.review-page__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+}
+
+.review-page__metric span {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.review-page__metric strong {
+  color: var(--color-text-primary);
+  font-size: 26px;
+}
+
+.review-page__catalog {
+  padding: 22px;
+}
+
+.review-page__catalog-header {
+  margin-bottom: 20px;
+}
+
+.review-page__catalog-header h2 {
+  font-size: 16px;
+  color: var(--color-text-primary);
+}
+
+.review-page__catalog-header > span {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.review-page__filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.review-page__search {
+  display: flex;
+  flex: 1;
+  min-width: 250px;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  color: var(--color-text-secondary);
+}
+
+.review-page__search input {
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+}
+
+.review-page__filters select {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.review-page__table-scroll {
+  overflow-x: auto;
+}
+
+.review-page__table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.review-page__table th {
+  padding: 13px 12px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.review-page__table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 12px;
+  color: var(--color-text-primary);
+  vertical-align: middle;
+}
+
+.review-page__api strong,
+.review-page__api small {
+  display: block;
+}
+
+.review-page__api small {
+  margin-top: 6px;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+
+.review-page__status {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+}
+
+.review-page__status--in_review {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.review-page__status--observed {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.review-page__status--corrected {
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+}
+
+.review-page__status--approved {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.review-page__ready {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.review-page__not-ready {
+  color: var(--color-text-secondary);
+}
+
+.review-page__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.review-page__actions a,
+.review-page__actions button {
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.review-page__actions button {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.review-page__actions a:hover,
+.review-page__actions button:hover {
+  text-decoration: underline;
+}
+
+.review-page__message,
+.review-page__error {
+  padding: 20px 0;
+  font-size: 12px;
+}
+
+.review-page__error {
+  color: var(--color-danger);
+}
+
+.review-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.review-page__empty strong {
+  color: var(--color-text-primary);
+}
+
+.review-page__empty p {
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .review-page__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .review-page__metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .review-page__catalog {
+    padding: 14px;
+  }
+
+  .review-page__search {
+    min-width: 100%;
+  }
+}
+
+
+.review-page__decision {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+.review-page__blockers {
+  margin-top: 10px;
+  max-width: 340px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.review-page__blockers summary {
+  cursor: pointer;
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.review-page__blockers ul {
+  margin: 10px 0;
+  padding-left: 18px;
+}
+
+.review-page__blockers li {
+  margin-bottom: 7px;
+  line-height: 1.5;
+}
+
+.review-page__blocking-rule {
+  margin-top: 10px;
+  padding: 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-secondary);
+}
+
+.review-page__blocking-rule strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: var(--color-text-primary);
+}
+
+.review-page__blocking-rule p {
+  margin-top: 5px;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
