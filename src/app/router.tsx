@@ -26,6 +26,8 @@ import { FindingsPage } from "../features/findings/pages/FindingsPage";
 
 import { ReviewPage } from "../features/reviews/pages/ReviewPage";
 
+import { AuditPage } from "../features/audit/pages/AuditPage";
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -81,6 +83,11 @@ export const router = createBrowserRouter([
       {
         path: "review",
         element: <ReviewPage />,
+      },
+
+      {
+        path: "audit",
+        element: <AuditPage />,
       },
 
       // Acceso denegado para usuarios autenticados
