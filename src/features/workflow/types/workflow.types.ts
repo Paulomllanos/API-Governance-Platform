@@ -60,3 +60,28 @@ export interface ChangeWorkflowStatusResponse {
   currentStatus: WorkflowStatus;
   transition: WorkflowTransition;
 }
+
+
+export interface ApprovalBlockingRule {
+  id: string;
+  ruleId: string;
+  ruleName: string | null;
+  severity: 'HIGH' | 'CRITICAL' | null;
+  message: string;
+  recommendation: string | null;
+}
+
+export interface WorkflowApprovalCheck {
+  evaluationReady: boolean;
+  approvalBlockers: string[];
+
+  evaluation: {
+    id: string;
+    status: string;
+    qualityScore: number | null;
+    hasBlockingIssues: boolean | null;
+    totalRules: number;
+    resultsCount: number;
+    blockingRules: ApprovalBlockingRule[];
+  } | null;
+}

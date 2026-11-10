@@ -9,6 +9,7 @@ import type { ApiVersion } from "../../../versions/types/version.types";
 import type {
   WorkflowHistory,
   WorkflowStatus,
+  WorkflowApprovalCheck,
 } from "../../types/workflow.types";
 
 import { workflowStatusLabels } from "../../types/workflow.types";
@@ -16,6 +17,7 @@ import { workflowStatusLabels } from "../../types/workflow.types";
 import {
   changeWorkflowStatusRequest,
   fetchWorkflowHistory,
+  fetchWorkflowApprovalCheck,
 } from "../../services/workflow.api";
 
 import "./WorkflowModal.css";
@@ -106,6 +108,13 @@ export function WorkflowModal({
   const [error, setError] = useState("");
   const [historyError, setHistoryError] = useState("");
 
+  const [approvalCheck, setApprovalCheck] =
+    useState<WorkflowApprovalCheck | null>(null);
+
+  const [isCheckingApproval, setIsCheckingApproval] = useState(false);
+
+  const [approvalCheckError, setApprovalCheckError] = useState("");
+
   useEffect(() => {
     let active = true;
 
@@ -154,11 +163,63 @@ export function WorkflowModal({
     (action) => action.toStatus === selectedStatus,
   );
 
+  useEffect(() => {
+    if (currentStatus !== "IN_REVIEW" || selectedStatus !== "APPROVED") {
+      setApprovalCheck(null);
+      setApprovalCheckError("");
+      return;
+    }
+
+    let active = true;
+
+    setApprovalCheck(null);
+    setApprovalCheckError("");
+    setIsCheckingApproval(true);
+
+    void fetchWorkflowApprovalCheck(version.apiId, version.id)
+      .then((result) => {
+        if (active) {
+          setApprovalCheck(result);
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setApprovalCheckError(
+            error instanceof Error
+              ? error.message
+              : "No fue posible verificar la aprobación.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setIsCheckingApproval(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [version.apiId, version.id, currentStatus, selectedStatus]);
+
+  
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!selectedAction || isSubmitting || isLoading) {
       return;
+    }
+
+    if (selectedAction.toStatus === "APPROVED") {
+      if (
+        isCheckingApproval ||
+        approvalCheckError ||
+        !approvalCheck?.evaluationReady
+      ) {
+        setError("La versión no tiene una validación de aprobación favorable.");
+        return;
+      }
     }
 
     if (selectedAction.requiresComment && !comment.trim()) {
@@ -270,6 +331,104 @@ export function WorkflowModal({
 
                     {selectedAction && (
                       <>
+                        {selectedAction.toStatus === "APPROVED" && (
+                          <div className="workflow-modal__approval-check">
+                            <h3>Validación de aprobación</h3>
+
+                            {isCheckingApproval ? (
+                              <p role="status">
+                                Verificando condiciones de gobierno...
+                              </p>
+                            ) : approvalCheckError ? (
+                              <p role="alert" className="workflow-modal__error">
+                                {approvalCheckError}
+                              </p>
+                            ) : approvalCheck?.evaluationReady ? (
+                              <div className="workflow-modal__approval-ready">
+                                <strong>Aprobación habilitada</strong>
+
+                                <p>
+                                  La evaluación vigente cumple las condiciones
+                                  necesarias para aprobar esta versión.
+                                </p>
+
+                                <div className="workflow-modal__approval-metrics">
+                                  <span>
+                                    Quality Score:{" "}
+                                    <strong>
+                                      {approvalCheck.evaluation?.qualityScore?.toLocaleString(
+                                        "es-CL",
+                                      ) ?? "—"}
+                                      /100
+                                    </strong>
+                                  </span>
+
+                                  <span>
+                                    Reglas:{" "}
+                                    <strong>
+                                      {approvalCheck.evaluation?.resultsCount ??
+                                        0}
+                                      /18
+                                    </strong>
+                                  </span>
+                                </div>
+                              </div>
+                            ) : approvalCheck ? (
+                              <div className="workflow-modal__approval-blocked">
+                                <strong>Aprobación bloqueada</strong>
+
+                                <p>
+                                  La versión no cumple todas las condiciones
+                                  necesarias para aprobarse.
+                                </p>
+
+                                <ul>
+                                  {approvalCheck.approvalBlockers.map(
+                                    (reason, index) => (
+                                      <li key={index}>{reason}</li>
+                                    ),
+                                  )}
+                                </ul>
+
+                                {approvalCheck.evaluation?.blockingRules.map(
+                                  (rule) => (
+                                    <div
+                                      key={rule.id}
+                                      className="workflow-modal__blocking-rule"
+                                    >
+                                      <strong>
+                                        {rule.ruleId}
+                                        {rule.ruleName
+                                          ? ` — ${rule.ruleName}`
+                                          : ""}
+                                      </strong>
+
+                                      <p>{rule.message}</p>
+
+                                      {rule.recommendation && (
+                                        <p>
+                                          Recomendación: {rule.recommendation}
+                                        </p>
+                                      )}
+                                    </div>
+                                  ),
+                                )}
+                              </div>
+                            ) : null}
+
+                            {approvalCheck?.evaluation && (
+                              <Link
+                                className="workflow-modal__evidence-link"
+                                to={`/app/evaluations/${encodeURIComponent(
+                                  approvalCheck.evaluation.id,
+                                )}`}
+                              >
+                                Ver evaluación completa
+                              </Link>
+                            )}
+                          </div>
+                        )}
+
                         <label htmlFor="workflow-comment">
                           Comentario
                           {selectedAction.requiresComment
@@ -291,7 +450,12 @@ export function WorkflowModal({
                         <button
                           type="submit"
                           className="workflow-modal__submit"
-                          disabled={isSubmitting}
+                          disabled={
+                            isSubmitting ||
+                            (selectedAction?.toStatus === "APPROVED" &&
+                              (isCheckingApproval ||
+                                !approvalCheck?.evaluationReady))
+                          }
                         >
                           {isSubmitting ? "Guardando..." : selectedAction.label}
                         </button>
