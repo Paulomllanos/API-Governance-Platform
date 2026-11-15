@@ -1,3 +1,5 @@
+import { UsersPage } from "../features/admin/UsersPage";
+import { SettingsPage } from "../features/settings/SettingsPage";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { ProtectedRoute } from "../features/auth/components/ProtectedRoute";
@@ -89,6 +91,9 @@ export const router = createBrowserRouter([
         path: "audit",
         element: <AuditPage />,
       },
+
+      { path: "settings", element: <SettingsPage /> },
+      { path: "settings/users", element: <ProtectedRoute allowedRoles={["ADMIN"]}><UsersPage /></ProtectedRoute> },
 
       // Acceso denegado para usuarios autenticados
       // que no tienen permisos suficientes.

@@ -1,7 +1,9 @@
+import { GlobalSearch } from "../../../features/search/GlobalSearch";
+import { NotificationBell } from "../../../features/notifications/NotificationBell";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Bell, ChevronDown, Search, LogOut, UserRound } from "lucide-react";
+import { ChevronDown, LogOut, UserRound, Settings } from "lucide-react";
 
 import { useAuth } from "../../../features/auth/context/AuthContext";
 
@@ -44,25 +46,10 @@ export function Topbar() {
 
   return (
     <header className="topbar">
-      <div className="topbar-search">
-        <Search size={17} />
-
-        <input
-          type="search"
-          placeholder="Buscar APIs, evaluaciones, hallazgos..."
-          aria-label="Buscar"
-        />
-      </div>
+      <GlobalSearch />
 
       <div className="topbar-actions">
-        <button
-          type="button"
-          className="topbar-icon-button"
-          aria-label="Notificaciones"
-        >
-          <Bell size={18} />
-          <span className="topbar-notification-dot" />
-        </button>
+        <NotificationBell />
 
         <div
           className="topbar-profile-container"
@@ -110,6 +97,12 @@ export function Topbar() {
                 </div>
               </div>
 
+              <button type="button" className="topbar-profile-menu__logout" style={{color:'#334155'}} onClick={() => {setIsProfileOpen(false);navigate('/app/settings')}}>
+                <Settings size={17} /><span>Mi perfil y configuración</span>
+              </button>
+              {user?.roles.includes('ADMIN') && <button type="button" className="topbar-profile-menu__logout" style={{color:'#334155'}} onClick={() => {setIsProfileOpen(false);navigate('/app/settings/users')}}>
+                <UserRound size={17} /><span>Administrar usuarios</span>
+              </button>}
               <div className="topbar-profile-menu__divider" />
 
               <button
