@@ -12,6 +12,7 @@ import type { WorkflowStatus } from "../../workflow/types/workflow.types";
 
 import { fetchAuditEvents } from "../services/audit.api";
 import { OperationalAuditSection } from "../components/OperationalAuditSection";
+import { useAuth } from "../../auth/context/AuthContext";
 
 import type { AuditEvent, AuditResponse } from "../types/audit.types";
 
@@ -143,6 +144,8 @@ function AuditEventRow({ event }: { event: AuditEvent }) {
 }
 
 export function AuditPage() {
+  const { user } = useAuth();
+  const canViewAdministrativeActivity = user?.roles.includes("ADMIN") ?? false;
   const [response, setResponse] = useState<AuditResponse | null>(null);
 
   const [page, setPage] = useState(1);
@@ -465,7 +468,7 @@ export function AuditPage() {
           </div>
         )}
       </Card>
-      <OperationalAuditSection />
+      {canViewAdministrativeActivity && <OperationalAuditSection />}
     </div>
   );
 }
