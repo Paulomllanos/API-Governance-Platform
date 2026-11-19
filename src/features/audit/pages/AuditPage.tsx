@@ -11,6 +11,7 @@ import { workflowStatusLabels } from "../../workflow/types/workflow.types";
 import type { WorkflowStatus } from "../../workflow/types/workflow.types";
 
 import { fetchAuditEvents } from "../services/audit.api";
+import { OperationalAuditSection } from "../components/OperationalAuditSection";
 
 import type { AuditEvent, AuditResponse } from "../types/audit.types";
 
@@ -464,6 +465,7 @@ export function AuditPage() {
           </div>
         )}
       </Card>
+      <OperationalAuditSection />
     </div>
   );
 }
