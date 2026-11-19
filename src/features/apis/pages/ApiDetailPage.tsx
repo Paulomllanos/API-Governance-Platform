@@ -1,0 +1,322 @@
+import { Link, useParams } from "react-router-dom";
+import { ArrowLeft, Box, CalendarDays, Layers3, UserRound } from "lucide-react";
+
+import { useApis } from "../hooks/useApis";
+import { useAuth } from "../../auth/context/AuthContext";
+
+import { Card } from "../../../components/ui/Card/Card";
+import { ApiVersionsTable } from "../../versions/components/ApiVersionsTable/ApiVersionsTable";
+
+import { UploadOpenApiModal } from "../../openapi/components/UploadOpenApiModal/UploadOpenApiModal";
+import type { ApiVersion } from "../../versions/types/version.types";
+
+import { OpenApiDocumentsModal } from "../../openapi/components/OpenApiDocumentsModal/OpenApiDocumentsModal";
+
+import { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
+
+import { Button } from "../../../components/ui/Button/Button";
+
+import { CreateVersionModal } from "../../versions/components/CreateVersionModal/CreateVersionModal";
+import type { CreateApiVersionData } from "../../versions/types/version.types";
+
+import type { ApiLifecycleStatus } from "../types/api.types";
+
+import "./ApiDetailPage.css";
+
+import { WorkflowModal } from "../../workflow/components/WorkflowModal/WorkflowModal";
+
+const statusLabels: Record<ApiLifecycleStatus, string> = {
+  ACTIVE: "Activa",
+  DRAFT: "Borrador",
+  DEPRECATED: "Deprecada",
+};
+
+export function ApiDetailPage() {
+  const { user } = useAuth();
+  const canCreateVersion = user?.roles.some((role) => role === "ADMIN" || role === "DEVELOPER") ?? false;
+  const canUploadDocument = canCreateVersion;
+  const { apiId } = useParams<{ apiId: string }>();
+  const {
+    getApiById,
+    getVersionsByApiId,
+    createVersion,
+    createDocument,
+    documents,
+    requestEvaluation,
+    isLoadingApis,
+    apisError,
+    refreshApis,
+    loadVersionsByApiId,
+    isLoadingVersions,
+    versionsError,
+  } = useApis();
+
+  const [isVersionModalOpen, setIsVersionModalOpen] = useState(false);
+  const [viewingVersion, setViewingVersion] = useState<ApiVersion | null>(null);
+  const api = apiId ? getApiById(apiId) : undefined;
+  const apiVersions = apiId ? getVersionsByApiId(apiId) : [];
+
+  const [selectedVersion, setSelectedVersion] = useState<ApiVersion | null>(
+    null,
+  );
+
+  const latestVersion = [...apiVersions].sort((a, b) => {
+    const aParts = a.version.split(".").map(Number);
+    const bParts = b.version.split(".").map(Number);
+
+    for (let index = 0; index < 3; index++) {
+      if (aParts[index] !== bParts[index]) {
+        return bParts[index] - aParts[index];
+      }
+    }
+
+    return 0;
+  })[0];
+
+  const documentCounts = documents.reduce<Record<string, number>>(
+    (counts, document) => {
+      counts[document.versionId] = (counts[document.versionId] ?? 0) + 1;
+
+      return counts;
+    },
+    {},
+  );
+
+  const [workflowVersion, setWorkflowVersion] = useState<ApiVersion | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!apiId) return;
+
+    void loadVersionsByApiId(apiId);
+
+    // La carga se ejecuta cuando cambia la API seleccionada.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiId]);
+
+  if (isLoadingApis) {
+    return (
+      <div className="api-detail-page">
+        <Card className="api-detail__not-found">
+          <h2>Cargando información de la API...</h2>
+          <p>Consultando el catálogo desde PostgreSQL.</p>
+        </Card>
+      </div>
+    );
+  }
+
+  if (apisError) {
+    return (
+      <div className="api-detail-page">
+        <Link to="/app/apis" className="api-detail__back">
+          <ArrowLeft size={16} />
+          Volver al catálogo
+        </Link>
+
+        <Card className="api-detail__not-found">
+          <h2>No fue posible cargar la API</h2>
+          <p>{apisError}</p>
+
+          <Button onClick={() => void refreshApis()}>Reintentar</Button>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!api) {
+    return (
+      <div className="api-detail-page">
+        <Link to="/app/apis" className="api-detail__back">
+          <ArrowLeft size={16} />
+          Volver al catálogo
+        </Link>
+
+        <Card className="api-detail__not-found">
+          <h1>API no encontrada</h1>
+          <p>No existe una API registrada con el identificador solicitado.</p>
+        </Card>
+      </div>
+    );
+  }
+
+  async function handleCreateVersion(
+    data: CreateApiVersionData,
+  ): Promise<boolean> {
+    return await createVersion(data);
+  }
+
+  return (
+    <div className="api-detail-page">
+      <Link to="/app/apis" className="api-detail__back">
+        <ArrowLeft size={16} />
+        Volver al catálogo
+      </Link>
+
+      <header className="api-detail__header">
+        <div className="api-detail__heading">
+          <span className="api-detail__eyebrow">API Workspace</span>
+
+          <h1>{api.name}</h1>
+
+          <p>{api.description}</p>
+        </div>
+
+        <span
+          className={`api-detail__status api-detail__status--${api.status.toLowerCase()}`}
+        >
+          {statusLabels[api.status]}
+        </span>
+      </header>
+
+      <section className="api-detail__metrics" aria-label="Resumen de la API">
+        <Card className="api-detail__metric">
+          <div className="api-detail__metric-icon">
+            <Layers3 size={19} />
+          </div>
+
+          <span>Versiones registradas</span>
+          <strong>{apiVersions.length}</strong>
+        </Card>
+
+        <Card className="api-detail__metric">
+          <div className="api-detail__metric-icon">
+            <Box size={19} />
+          </div>
+
+          <span>Última versión</span>
+          <strong>{latestVersion ? `v${latestVersion.version}` : "—"}</strong>
+        </Card>
+      </section>
+
+      <Card className="api-detail__section">
+        <div className="api-detail__section-heading">
+          <h2>Información general</h2>
+          <p>Datos principales del activo registrado.</p>
+        </div>
+
+        <div className="api-detail__information">
+          <div className="api-detail__information-item">
+            <UserRound size={18} />
+
+            <div>
+              <span>Responsable</span>
+              <strong>{api.owner}</strong>
+            </div>
+          </div>
+
+          <div className="api-detail__information-item">
+            <CalendarDays size={18} />
+
+            <div>
+              <span>Última actualización</span>
+              <strong>
+                {new Date(`${api.updatedAt}T12:00:00`).toLocaleDateString(
+                  "es-CL",
+                )}
+              </strong>
+            </div>
+          </div>
+
+          <div className="api-detail__information-item">
+            <Layers3 size={18} />
+
+            <div>
+              <span>Estado del activo</span>
+              <strong>{statusLabels[api.status]}</strong>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="api-detail__section">
+        <div className="api-detail__versions-header">
+          <div className="api-detail__section-heading">
+            <h2>Versiones y especificaciones OpenAPI</h2>
+
+            <p>Consulta y administra las versiones registradas de esta API.</p>
+          </div>
+
+          {canCreateVersion && (
+            <Button
+              disabled={isLoadingVersions || Boolean(versionsError)}
+              onClick={() => setIsVersionModalOpen(true)}
+            >
+              <Plus size={17} />
+              Nueva versión
+            </Button>
+          )}
+        </div>
+
+        {isLoadingVersions ? (
+          <p role="status">Cargando versiones desde PostgreSQL...</p>
+        ) : versionsError ? (
+          <div role="alert">
+            <p>{versionsError}</p>
+
+            <Button
+              onClick={() => {
+                if (apiId) {
+                  void loadVersionsByApiId(apiId);
+                }
+              }}
+            >
+              Reintentar
+            </Button>
+          </div>
+        ) : (
+          <ApiVersionsTable
+            versions={apiVersions}
+            canUploadDocument={canUploadDocument}
+            onUploadDocument={setSelectedVersion}
+            documentCounts={documentCounts}
+            onViewDocuments={setViewingVersion}
+            onManageWorkflow={setWorkflowVersion}
+          />
+        )}
+      </Card>
+
+      {canCreateVersion && isVersionModalOpen && (
+        <CreateVersionModal
+          apiId={api.id}
+          existingVersions={apiVersions.map((version) => version.version)}
+          onClose={() => setIsVersionModalOpen(false)}
+          onCreate={handleCreateVersion}
+        />
+      )}
+
+      {canUploadDocument && selectedVersion && (
+        <UploadOpenApiModal
+          versionId={selectedVersion.id}
+          version={selectedVersion.version}
+          onCreate={createDocument}
+          onClose={() => setSelectedVersion(null)}
+        />
+      )}
+
+      {viewingVersion && (
+        <OpenApiDocumentsModal
+          version={viewingVersion.version}
+          documents={documents.filter(
+            (document) => document.versionId === viewingVersion.id,
+          )}
+          onRequestEvaluation={(documentId) =>
+            requestEvaluation({ documentId })
+          }
+          onClose={() => setViewingVersion(null)}
+        />
+      )}
+
+      {workflowVersion && apiId && (
+        <WorkflowModal
+          version={workflowVersion}
+          onClose={() => setWorkflowVersion(null)}
+          onUpdated={async () => {
+            await Promise.all([loadVersionsByApiId(apiId), refreshApis()]);
+          }}
+        />
+      )}
+    </div>
+  );
+}

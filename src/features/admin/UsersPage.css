@@ -1,0 +1,60 @@
+.users-page{max-width:1440px;color:var(--color-text-primary)}
+.users-page__heading{display:flex;align-items:center;gap:18px;margin:2px 0 28px}
+.users-page__heading h1{font-size:clamp(25px,2.6vw,33px);letter-spacing:-.035em;margin:0 0 5px}
+.users-page__heading p{color:var(--color-text-secondary);font-size:14px;margin:0}
+.users-page__hero-icon{width:52px;height:52px;display:grid;place-items:center;flex:none;border-radius:15px;background:linear-gradient(145deg,#7578fa,#4648d9);color:white;box-shadow:0 8px 20px #585bf033}
+.users-page__top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;margin-bottom:24px}
+.users-page__panel{background:var(--color-surface);border:1px solid var(--color-border);border-radius:16px;padding:26px;box-shadow:var(--shadow-md);min-width:0}
+.users-page__panel h2{display:flex;align-items:center;gap:12px;font-size:19px;letter-spacing:-.025em;margin:0 0 24px}
+.users-page__icon{width:39px;height:39px;border-radius:11px;background:#eef0ff;color:var(--color-primary);display:inline-grid;place-items:center;flex:none}
+.users-page__form{display:flex;flex-direction:column;gap:14px}
+.users-page__form h2{margin-bottom:6px}
+.users-page__form>label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:600}
+.users-page__input{height:43px;display:flex;align-items:center;gap:10px;padding:0 13px;border:1px solid var(--color-border-strong);border-radius:9px;color:var(--color-text-secondary);background:#fff;transition:border-color .15s,box-shadow .15s}
+.users-page__input:focus-within{border-color:var(--color-primary);box-shadow:0 0 0 3px var(--color-primary-soft)}
+.users-page__input input{width:100%;height:100%;border:0;outline:0;background:transparent;color:var(--color-text-primary);font-size:13px;min-width:0}
+.users-page__input input::placeholder{color:var(--color-text-tertiary)}
+.users-page__fieldset{min-width:0;border:0;padding:0;margin:0}
+.users-page__fieldset legend{font-size:13px;font-weight:600;margin-bottom:9px}
+.users-page__role-options,.users-page__table-roles{display:flex;align-items:center;flex-wrap:wrap;gap:14px}
+.users-page__role-options{padding:13px;border:1px solid var(--color-border);border-radius:10px}
+.users-page__role-options label,.users-page__table-roles label{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer}
+.users-page input[type="checkbox"]{accent-color:var(--color-primary);width:16px;height:16px;margin:0}
+.users-page__primary{width:100%;height:44px;display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;background:var(--color-primary);color:white;font-size:14px;font-weight:700}
+.users-page__primary:hover:not(:disabled){background:var(--color-primary-hover)}
+.users-page button:disabled{opacity:.48;cursor:not-allowed}
+.users-page__policies{display:flex;flex-direction:column}
+.users-page__policy-list{display:flex;flex-direction:column}
+.users-page__policy{display:grid;grid-template-columns:140px minmax(0,1fr);align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid var(--color-border);font-size:13px;line-height:1.5}
+.users-page__policy strong{background:#eef0ff;color:#3d42a5;padding:9px 12px;border-radius:9px;font-size:12px}
+.users-page__notice{display:flex;align-items:flex-start;gap:13px;padding:17px;margin-top:auto;background:var(--color-primary-soft);border-radius:10px;color:#3f4984;font-size:13px;line-height:1.65}
+.users-page__notice svg{flex:none;margin-top:1px}
+.users-page__listing{padding:20px 20px 8px}
+.users-page__listing-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.users-page__listing-header h2{margin:0}
+.users-page__count{font-size:12px;color:var(--color-text-secondary);background:var(--color-surface-secondary);border-radius:30px;padding:7px 10px}
+.users-page__table-scroll{overflow-x:auto}
+.users-page__table{border-collapse:collapse;width:100%;text-align:left;min-width:840px}
+.users-page__table thead{background:#f3f5fc}
+.users-page__table th{color:#53617b;font-size:12px;font-weight:700;padding:14px 16px}
+.users-page__table th:first-child{border-radius:9px 0 0 9px}
+.users-page__table th:last-child{border-radius:0 9px 9px 0}
+.users-page__table td{padding:15px 16px;border-bottom:1px solid var(--color-border);font-size:13px;vertical-align:middle}
+.users-page__table tbody tr:last-child td{border-bottom:0}
+.users-page__table tbody tr:hover{background:#fafbff}
+.users-page__identity{display:flex;flex-direction:column;gap:4px}
+.users-page__identity strong{font-weight:650}
+.users-page__identity small{color:var(--color-text-secondary);font-size:12px;overflow-wrap:anywhere}
+.users-page__status{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:20px;font-size:12px;font-weight:600}
+.users-page__status span{width:7px;height:7px;border-radius:100%;background:currentColor}
+.users-page__status--active{color:#067647;background:#e7f7ec}
+.users-page__status--inactive{color:#9f3737;background:#fff1f1}
+.users-page__actions{display:flex;gap:9px;align-items:center}
+.users-page__actions button{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 11px;font-size:12px;font-weight:600;border-radius:8px;white-space:nowrap;background:#fff;border:1px solid var(--color-border-strong);color:var(--color-text-primary)}
+.users-page__actions .users-page__save{border-color:#b8c1fc;color:#4348ce;background:#f6f7ff}
+.users-page__actions button:hover:not(:disabled){border-color:var(--color-primary);background:var(--color-primary-soft)}
+.users-page__alert{display:flex;align-items:center;gap:8px;margin:0 0 16px;padding:11px 14px;border-radius:10px;background:var(--color-success-soft);font-size:13px}
+.users-page__alert.management-error{background:var(--color-danger-soft)}
+.users-page__state,.users-page__empty{color:var(--color-text-secondary);font-size:13px;padding:18px}
+@media(max-width:900px){.users-page__top{grid-template-columns:1fr}.users-page__notice{margin-top:20px}}
+@media(max-width:600px){.users-page__panel{padding:18px}.users-page__listing{padding:16px 12px}.users-page__heading{align-items:flex-start}.users-page__hero-icon{width:44px;height:44px}.users-page__policy{grid-template-columns:1fr;gap:6px}}
