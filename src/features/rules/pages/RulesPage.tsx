@@ -4,6 +4,7 @@ import { Search, ShieldCheck } from "lucide-react";
 import { Card } from "../../../components/ui/Card/Card";
 import { RULE_CATEGORIES } from "../constants/ruleCategories";
 import { fetchGovernanceRules } from "../services/rules.api";
+import { validateRuleCatalog } from "../utils/validateRuleCatalog";
 import { RuleDetailModal } from "../components/RuleDetailModal/RuleDetailModal";
 
 import type {
@@ -42,6 +43,9 @@ export function RulesPage() {
     void fetchGovernanceRules()
       .then((data) => {
         if (!active) return;
+        if (!validateRuleCatalog(data)) {
+          throw new Error("El catálogo del motor no coincide con las 18 reglas y seis categorías del MVP.");
+        }
         setRules(data);
         setError(null);
       })
