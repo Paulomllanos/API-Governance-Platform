@@ -496,3 +496,33 @@
   }
 }
 
+
+
+/* Rediseño de la actividad técnica y administrativa */
+.audit-page__operations{margin-top:24px;border:1px solid var(--color-border);border-radius:16px;box-shadow:var(--shadow-md);padding:24px}
+.audit-page__operations .audit-page__content-header{margin-bottom:20px}
+.audit-page__section-title{display:flex;gap:13px;align-items:center;font-size:19px!important;letter-spacing:-.02em}
+.audit-page__section-icon{height:42px;width:42px;display:inline-grid;place-items:center;border-radius:12px;color:var(--color-primary);background:var(--color-primary-soft);flex:none}
+.audit-page__operations .audit-page__content-header p{font-size:13px;margin-top:2px}
+.audit-page__operations-refresh{color:white;background:var(--color-primary);border-color:var(--color-primary);font-weight:600}
+.audit-page__operations-refresh:hover:not(:disabled){background:var(--color-primary-hover)}
+.audit-page__operations .audit-page__table{min-width:960px}
+.audit-page__operations .audit-page__table thead{background:#f2f4fc}
+.audit-page__operations .audit-page__table th{padding:14px 15px;color:#52627e;font-size:12px;border-bottom:0}
+.audit-page__operations .audit-page__table th:first-child{border-radius:9px 0 0 9px}
+.audit-page__operations .audit-page__table th:last-child{border-radius:0 9px 9px 0}
+.audit-page__operations .audit-page__table td{padding:13px 15px;vertical-align:middle;font-size:12px}
+.audit-page__operations .audit-page__table tbody tr:hover{background:#fafbff}
+.audit-page__action-cell{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.audit-page__action-cell strong{font-size:12px;font-weight:600}
+.audit-page__action-icon{height:34px;width:34px;flex:none;border-radius:9px;display:grid;place-items:center;background:var(--color-primary-soft);color:var(--color-primary)}
+.audit-page__resource{display:flex;align-items:center;flex-wrap:wrap;gap:6px;min-width:0}
+.audit-page__resource span{color:#4348ce;font-size:11px;font-weight:700;padding:5px 7px;border-radius:7px;background:#edf0ff;white-space:nowrap}
+.audit-page__resource small{font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--color-text-secondary)}
+.audit-page__operation-date{white-space:nowrap;color:var(--color-text-secondary)}
+.audit-page__operation-details{position:relative}
+.audit-page__operation-details summary{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:8px;border:1px solid #cbd2f9;color:var(--color-primary);background:#f8f9ff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;list-style:none}
+.audit-page__operation-details summary::-webkit-details-marker{display:none}
+.audit-page__operation-details[open] summary svg{transform:rotate(180deg)}
+.audit-page__operation-details pre{white-space:pre-wrap;overflow-wrap:anywhere;max-width:min(480px,80vw);max-height:260px;overflow:auto;background:var(--color-surface-secondary);padding:13px;border-radius:8px;border:1px solid var(--color-border);font-size:11px;margin-top:10px}
+@media(max-width:640px){.audit-page__operations{padding:16px}.audit-page__operations-refresh{width:100%;justify-content:center}}

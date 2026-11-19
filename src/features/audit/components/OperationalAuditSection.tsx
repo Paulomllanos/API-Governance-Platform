@@ -1,9 +1,18 @@
 import { useEffect, useState } from 'react';
+import { Activity, RefreshCw, ChevronDown, FileText, GitBranch, CheckCircle2, UploadCloud, Layers3 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card/Card';
 import {
   fetchOperationalAudit,
   type OperationalAuditResponse,
 } from '../services/audit-activity.api';
+
+const ACTION_ICONS: Record<string, typeof Activity> = {
+  WORKFLOW_TRANSITION: GitBranch,
+  EVALUATION_COMPLETED: CheckCircle2,
+  EVALUATION_REQUESTED: FileText,
+  OPENAPI_DOCUMENT_UPLOADED: UploadCloud,
+  API_VERSION_CREATED: Layers3,
+};
 
 const ACTION_LABELS: Record<string, string> = {
   API_CREATED: 'API registrada',
@@ -45,14 +54,14 @@ export function OperationalAuditSection() {
   }, [page, reload]);
 
   return (
-    <Card className="audit-page__content">
+    <Card className="audit-page__content audit-page__operations">
       <div className="audit-page__content-header">
         <div>
-          <h2>Actividad técnica y administrativa</h2>
+          <h2 className="audit-page__section-title"><span className="audit-page__section-icon"><Activity size={21} aria-hidden="true" /></span>Actividad técnica y administrativa</h2>
           <p>Operaciones del sistema registradas con usuario, recurso y fecha.</p>
         </div>
-        <button type="button" disabled={loading} onClick={() => setReload((n) => n + 1)}>
-          Actualizar
+        <button type="button" className="audit-page__refresh audit-page__operations-refresh" disabled={loading} onClick={() => setReload((n) => n + 1)}>
+          <RefreshCw size={16} aria-hidden="true" />Actualizar
         </button>
       </div>
       {loading && <p role="status">Cargando actividad...</p>}
@@ -73,20 +82,17 @@ export function OperationalAuditSection() {
               <tbody>
                 {data.items.map((item) => (
                   <tr key={item.id}>
-                    <td>{ACTION_LABELS[item.action] ?? item.action}</td>
+                    <td><span className="audit-page__action-cell"><span className="audit-page__action-icon">{(() => { const Icon = ACTION_ICONS[item.action] ?? Activity; return <Icon size={16} aria-hidden="true" />; })()}</span><strong>{ACTION_LABELS[item.action] ?? item.action}</strong></span></td>
                     <td>
                       <strong>{item.actor?.displayName ?? 'Cuenta no disponible'}</strong>
                       <small>{item.actor?.email ?? 'Sin identificación adicional'}</small>
                     </td>
-                    <td>
-                      {item.entityType}
-                      <small>{item.entityId ?? '—'}</small>
-                    </td>
-                    <td>{new Date(item.createdAt).toLocaleString('es-CL')}</td>
+                    <td><div className="audit-page__resource"><span>{item.entityType}</span><small title={item.entityId ?? undefined}>{item.entityId ?? '—'}</small></div></td>
+                    <td><time dateTime={item.createdAt} className="audit-page__operation-date">{new Date(item.createdAt).toLocaleString('es-CL')}</time></td>
                     <td>
                       {item.detail ? (
-                        <details>
-                          <summary>Ver datos</summary>
+                        <details className="audit-page__operation-details">
+                          <summary>Ver datos <ChevronDown size={14} aria-hidden="true" /></summary>
                           <pre>{JSON.stringify(item.detail, null, 2)}</pre>
                         </details>
                       ) : '—'}
