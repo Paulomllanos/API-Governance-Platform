@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Box, CalendarDays, Layers3, UserRound } from "lucide-react";
 
 import { useApis } from "../hooks/useApis";
+import { useAuth } from "../../auth/context/AuthContext";
 
 import { Card } from "../../../components/ui/Card/Card";
 import { ApiVersionsTable } from "../../versions/components/ApiVersionsTable/ApiVersionsTable";
@@ -32,6 +33,9 @@ const statusLabels: Record<ApiLifecycleStatus, string> = {
 };
 
 export function ApiDetailPage() {
+  const { user } = useAuth();
+  const canCreateVersion = user?.roles.some((role) => role === "ADMIN" || role === "DEVELOPER") ?? false;
+  const canUploadDocument = canCreateVersion;
   const { apiId } = useParams<{ apiId: string }>();
   const {
     getApiById,
@@ -234,13 +238,15 @@ export function ApiDetailPage() {
             <p>Consulta y administra las versiones registradas de esta API.</p>
           </div>
 
-          <Button
-            disabled={isLoadingVersions || Boolean(versionsError)}
-            onClick={() => setIsVersionModalOpen(true)}
-          >
-            <Plus size={17} />
-            Nueva versión
-          </Button>
+          {canCreateVersion && (
+            <Button
+              disabled={isLoadingVersions || Boolean(versionsError)}
+              onClick={() => setIsVersionModalOpen(true)}
+            >
+              <Plus size={17} />
+              Nueva versión
+            </Button>
+          )}
         </div>
 
         {isLoadingVersions ? (
@@ -262,6 +268,7 @@ export function ApiDetailPage() {
         ) : (
           <ApiVersionsTable
             versions={apiVersions}
+            canUploadDocument={canUploadDocument}
             onUploadDocument={setSelectedVersion}
             documentCounts={documentCounts}
             onViewDocuments={setViewingVersion}
@@ -270,7 +277,7 @@ export function ApiDetailPage() {
         )}
       </Card>
 
-      {isVersionModalOpen && (
+      {canCreateVersion && isVersionModalOpen && (
         <CreateVersionModal
           apiId={api.id}
           existingVersions={apiVersions.map((version) => version.version)}
@@ -279,7 +286,7 @@ export function ApiDetailPage() {
         />
       )}
 
-      {selectedVersion && (
+      {canUploadDocument && selectedVersion && (
         <UploadOpenApiModal
           versionId={selectedVersion.id}
           version={selectedVersion.version}
