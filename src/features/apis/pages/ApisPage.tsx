@@ -4,6 +4,7 @@ import { Layers3, Plus, Search, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { useApis } from "../hooks/useApis";
+import { useAuth } from "../../auth/context/AuthContext";
 
 import { Button } from "../../../components/ui/Button/Button";
 import { Card } from "../../../components/ui/Card/Card";
@@ -24,6 +25,8 @@ const statusLabels: Record<ApiLifecycleStatus, string> = {
 };
 
 export function ApisPage() {
+  const { user } = useAuth();
+  const canCreateApi = user?.roles.some((role) => role === "ADMIN" || role === "DEVELOPER") ?? false;
   const [search, setSearch] = useState("");
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -70,13 +73,15 @@ export function ApisPage() {
           </p>
         </div>
 
-        <Button
-          onClick={() => setIsCreateModalOpen(true)}
-          disabled={isLoadingApis}
-        >
-          <Plus size={17} />
-          Nueva API
-        </Button>
+        {canCreateApi && (
+          <Button
+            onClick={() => setIsCreateModalOpen(true)}
+            disabled={isLoadingApis}
+          >
+            <Plus size={17} />
+            Nueva API
+          </Button>
+        )}
       </header>
 
       <div className="apis-page__summary">
@@ -224,7 +229,7 @@ export function ApisPage() {
           )}
         </div>
       </Card>
-      {isCreateModalOpen && (
+      {canCreateApi && isCreateModalOpen && (
         <CreateApiModal
           onClose={() => setIsCreateModalOpen(false)}
           onCreate={handleCreateApi}

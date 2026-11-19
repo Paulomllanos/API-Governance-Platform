@@ -5,6 +5,7 @@ import { workflowStatusLabels } from "../../../workflow/types/workflow.types";
 
 interface ApiVersionsTableProps {
   versions: ApiVersion[];
+  canUploadDocument?: boolean;
   documentCounts: Record<string, number>;
   onUploadDocument: (version: ApiVersion) => void;
   onViewDocuments: (version: ApiVersion) => void;
@@ -32,6 +33,7 @@ function compareVersions(a: ApiVersion, b: ApiVersion) {
 
 export function ApiVersionsTable({
   versions,
+  canUploadDocument = true,
   onUploadDocument,
   documentCounts,
   onViewDocuments,
@@ -118,7 +120,7 @@ export function ApiVersionsTable({
                     </button>
                   )}
 
-                  <button
+                  {canUploadDocument && <button
                     type="button"
                     className="api-versions__upload-button"
                     onClick={() => onUploadDocument(version)}
@@ -129,7 +131,7 @@ export function ApiVersionsTable({
                     }
                   >
                     Cargar OpenAPI
-                  </button>
+                  </button>}
 
                   <button
                     type="button"
